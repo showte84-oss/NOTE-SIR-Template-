@@ -317,7 +317,7 @@
             <h3>၂။ General Information ဖြည့်သွင်းရန်</h3>
             <table class="info-table">
                 <tr><td class="info-label">Job Ref :</td><td colspan="2"><input type="text" id="job_ref"></td></tr>
-                <tr><td class="info-label">Departure from the office to loading point (Time) :</td><td colspan="2"><input type="text" id="dep_time" placeholder="e.g., 7:00 Hrs"></td></tr>
+                <tr><td class="info-label">Departure from the office to loading point (Time) :</td><td colspan="2"><input type="text" id="dep_time" value="7:00 Hrs" placeholder="e.g., 7:00 Hrs"></td></tr>
                 <tr><td class="info-label">Departure Date :</td><td colspan="2"><input type="date" id="dep_date"></td></tr>
                 <tr><td class="info-label">Arrival (Time) :</td><td colspan="2"><input type="text" id="arr_time" placeholder="e.g., 14:30 Hrs"></td></tr>
                 <tr><td class="info-label">Arrival Date :</td><td colspan="2"><input type="date" id="arr_date"></td></tr>
@@ -354,14 +354,21 @@
 
             <h3>၄။ 10% Weighing Details (Weight List တွင် ထည့်သွင်းရန်)</h3>
             <div class="instruction" style="background: #f4fafe; border-left: 5px solid #3498db;">
-                <button type="button" class="btn-main" style="background:#3498db; margin-bottom:10px; font-size:15px; padding:10px; border-radius:6px; box-shadow: 0 3px 0 #2980b9;" onclick="calculateSir10Percent()">🔄 Auto Calculate 10% Bags</button>
-                <div style="font-size:13px; color:#555;">(အထက်ပါ Container Details ဇယားမှ Total Bags ကိုယူ၍ 10% ကို 200 စီ ခွဲထုတ်ပေးမည်)</div>
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                    <select id="sir-weight-percent" style="flex: 1; padding: 10px; border: 1px solid #3498db; border-radius: 6px; font-size: 15px; background: white; cursor: pointer;">
+                        <option value="0.10" selected>10% Bags</option>
+                        <option value="0.20">20% Bags</option>
+                    </select>
+                    <button type="button" class="btn-main" style="flex: 2; background:#3498db; font-size:15px; padding:10px; border-radius:6px; box-shadow: 0 3px 0 #2980b9; margin: 0;" onclick="calculateSirWeightDetails()">🔄 Auto Calculate</button>
+                </div>
+                <div style="font-size:13px; color:#555; margin-bottom: 10px;">(အထက်ပါ Container Details ဇယားမှ Total Bags ကိုယူ၍ ရွေးချယ်ထားသော % အလိုက် 200 စီ ခွဲထုတ်ပေးမည်)</div>
                 <div id="sir-weighing-info" style="font-weight:bold; color:#2980b9; margin-top:10px; display:none; text-align:center; font-size:15px;"></div>
             </div>
             
-            <div id="sir-weighing-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 15px;">
+            <div id="sir-weighing-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom: 15px;" data-row-count="0">
                 <!-- JS will inject calculated rows -->
             </div>
+            <button type="button" class="btn-small" style="background:#28a745; width:100%; margin-top:10px; padding:10px; font-weight:bold;" onclick="addSirWeightRow()">➕ Add Row</button>
 
             <div style="display: flex; gap: 15px; margin-bottom: 30px; background: #fdfbf7; padding: 15px; border: 1px solid #e8daef; border-radius: 6px; align-items: flex-end;">
                 <div style="flex: 1;">
@@ -425,6 +432,9 @@
             if(app === 'sir') {
                 syncDataToSIR();
             }
+            if(app === 'sgs') {
+                if (typeof updateVGM === 'function') updateVGM();
+            }
         }
 
         function syncDataToSIR() {
@@ -438,6 +448,7 @@
             document.getElementById('place_insp').value = document.getElementById('inspection-place-input').value || '';
             document.getElementById('vessel').value = document.getElementById('vessel-input').value || '';
             document.getElementById('destination').value = document.getElementById('destination-input').value || '';
+            document.getElementById('dep_date').value = document.getElementById('job-date-actual').value || '';
             
             let insp = document.getElementById('inspector-input').value || '';
             if(insp) document.getElementById('inspector').value = insp;
@@ -1113,11 +1124,46 @@
             return truncWt(num).toFixed(getDec());
         }
 
+        function getMergedVgmColumns() {
+            let sirPkgs = sirPackages.filter(p => p.name.trim() !== '');
+            let merged = [];
+            let sirNames = new Set();
+            
+            // "SGS Seal" is already a fixed column in Column F of VGM Excel, 
+            // so we exclude it from dynamic columns to avoid duplication.
+            sirNames.add("sgs seal");
+            
+            // Collect all unique names from both sources
+            let allNames = new Set();
+            sirPkgs.forEach(p => allNames.add(p.name.trim().toLowerCase()));
+            customColumns.forEach(c => allNames.add(c.trim().toLowerCase()));
+            
+            // Build the merged list
+            allNames.forEach(name => {
+                if (name === "sgs seal") return;
+                
+                // Find if it exists in SIR first
+                let sirPkg = sirPkgs.find(p => p.name.trim().toLowerCase() === name);
+                let sgsColIdx = customColumns.findIndex(c => c.trim().toLowerCase() === name);
+                
+                if (sirPkg) {
+                    // If in SIR, take it (even if also in SGS, SIR takes priority for 'val')
+                    merged.push({ name: sirPkg.name.trim(), source: 'sir', val: sirPkg.val, sgsIndex: sgsColIdx });
+                } else if (sgsColIdx !== -1) {
+                    // If only in SGS
+                    merged.push({ name: customColumns[sgsColIdx].trim(), source: 'sgs', index: sgsColIdx });
+                }
+            });
+            
+            return merged;
+        }
+
         function updateVGM() {
             let vgmArea = document.getElementById('vgmDetailsArea'); if (!vgmArea) return;
             let noOfCtn = parseInt(document.getElementById('noOfCtn').value) || 1;
+            let mergedCols = getMergedVgmColumns();
             
-            let html = `<div class="card" style="overflow-x: auto;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><h2>VGM SUMMARY</h2><button class="btn-small ${isVgmEditing ? 'btn-save' : 'btn-edit'}" onclick="toggleVgmEdit()">${isVgmEditing ? '💾 Save' : '✏️ Edit'}</button></div><table class="print-table" id="vgm-table" style="width:100%;"><thead><tr><th>Sr.</th><th>Container No</th><th>Bags</th><th>Avg Wt</th><th>Cargo Wt</th>${customColumns.map(c => `<th>${c}</th>`).join('')}<th>Add Wt</th><th>Tare</th><th style="background:#2C5E43; color:white;">Total</th></tr></thead><tbody>`;
+            let html = `<div class="card" style="overflow-x: auto;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><h2>VGM SUMMARY</h2><button class="btn-small ${isVgmEditing ? 'btn-save' : 'btn-edit'}" onclick="toggleVgmEdit()">${isVgmEditing ? '💾 Save' : '✏️ Edit'}</button></div><table class="print-table" id="vgm-table" style="width:100%;"><thead><tr><th>Sr.</th><th>Container No</th><th>Bags</th><th>Avg Wt</th><th>Cargo Wt</th><th>SGS Seal</th>${mergedCols.map(c => `<th>${c.name}</th>`).join('')}<th>Add Wt</th><th>Tare</th><th style="background:#2C5E43; color:white;">Total</th></tr></thead><tbody>`;
             
             for (let i = 1; i <= noOfCtn; i++) {
                 let ctnNo = document.getElementById(`ctn-no-input-${i}`)?.value || '-';
@@ -1128,10 +1174,31 @@
                 let addsSum = 0;
                 let ctnOverrides = vgmOverrides[i] || {};
                 
-                let dynCells = customColumns.map((col, idx) => {
-                    let val = ctnOverrides[col] !== undefined ? ctnOverrides[col] : (document.getElementById(`ctn-dyn-${i}-${idx}`)?.value || '');
+                // Fixed SGS Seal (Column F in Excel)
+                let sgsSealVal = ctnOverrides['SGS Seal'] !== undefined ? ctnOverrides['SGS Seal'] : '0.012';
+                addsSum += parseFloat(sgsSealVal) || 0;
+                let sgsSealHtml = isVgmEditing ? `<td><input type="text" class="vgm-input" value="${sgsSealVal}" oninput="handleVgmInput(${i}, 'SGS Seal', this.value)" style="width:60px;"></td>` : `<td>${sgsSealVal}</td>`;
+
+                let dynCells = mergedCols.map((col) => {
+                    let val = '';
+                    if (col.source === 'sir') {
+                        val = col.val || '';
+                        // User Request: If both exist, prioritize SIR. Do not sum.
+                        // Only use SGS value if SIR value is empty/zero.
+                        if ((!val || parseFloat(val) === 0) && col.sgsIndex !== undefined && col.sgsIndex !== -1) {
+                            let sgsVal = document.getElementById(`ctn-dyn-${i}-${col.sgsIndex}`)?.value || '';
+                            val = sgsVal;
+                        }
+                    } else {
+                        val = document.getElementById(`ctn-dyn-${i}-${col.index}`)?.value || '';
+                    }
+
+                    if (ctnOverrides[col.name] !== undefined) {
+                        val = ctnOverrides[col.name];
+                    }
+                    
                     addsSum += parseFloat(val) || 0;
-                    return isVgmEditing ? `<td><input type="text" class="vgm-input" value="${val}" oninput="handleVgmInput(${i}, '${col}', this.value)" style="width:60px;"></td>` : `<td>${val}</td>`;
+                    return isVgmEditing ? `<td><input type="text" class="vgm-input" value="${val}" oninput="handleVgmInput(${i}, '${col.name}', this.value)" style="width:60px;"></td>` : `<td>${val}</td>`;
                 });
 
                 let allDynCellsHtml = dynCells.join('');
@@ -1142,7 +1209,7 @@
                 let tareVal = ctnOverrides['Tare'] !== undefined ? ctnOverrides['Tare'] : (document.getElementById(`ctn-tare-${i}`)?.value || '');
                 let total = truncWt(cargoWt + addsSum + (parseFloat(tareVal) || 0));
                 
-                html += `<tr><td>${i}</td><td><b>${ctnNo}</b></td><td>${bags}</td><td>${formatWt(avgWt)}</td><td>${formatWt(cargoWt)}</td>${allDynCellsHtml}<td>${isVgmEditing ? `<input type="text" value="${addVal}" oninput="handleVgmInput(${i}, 'Add', this.value)" style="width:60px;">` : addVal}</td><td>${isVgmEditing ? `<input type="text" value="${tareVal}" oninput="handleVgmInput(${i}, 'Tare', this.value)" style="width:60px;">` : tareVal}</td><td style="font-weight:bold;" id="vgm-tot-${i}">${formatWt(total)}</td></tr>`;
+                html += `<tr><td>${i}</td><td><b>${ctnNo}</b></td><td>${bags}</td><td>${formatWt(avgWt)}</td><td>${formatWt(cargoWt)}</td>${sgsSealHtml}${allDynCellsHtml}<td>${isVgmEditing ? `<input type="text" value="${addVal}" oninput="handleVgmInput(${i}, 'Add', this.value)" style="width:60px;">` : addVal}</td><td>${isVgmEditing ? `<input type="text" value="${tareVal}" oninput="handleVgmInput(${i}, 'Tare', this.value)" style="width:60px;">` : tareVal}</td><td style="font-weight:bold;" id="vgm-tot-${i}">${formatWt(total)}</td></tr>`;
             }
             vgmArea.innerHTML = html + "</tbody></table></div>";
         }
@@ -1727,18 +1794,26 @@
 
         function updateSirPackage(id, field, val) {
             let pkg = sirPackages.find(p => p.id === id);
-            if(pkg) { pkg[field] = val; localStorage.setItem('sir_packages', JSON.stringify(sirPackages)); }
+            if(pkg) { 
+                pkg[field] = val; 
+                localStorage.setItem('sir_packages', JSON.stringify(sirPackages)); 
+                if (typeof updateVGM === 'function') updateVGM();
+            }
         }
 
         function addSirPackage() {
             sirPackages.push({id: Date.now(), name: 'New Item', val: ''});
-            renderSirPackages(); localStorage.setItem('sir_packages', JSON.stringify(sirPackages));
+            renderSirPackages(); 
+            localStorage.setItem('sir_packages', JSON.stringify(sirPackages));
+            if (typeof updateVGM === 'function') updateVGM();
         }
 
         function deleteSirPackage(id) {
             if(confirm('ဒီ Package ကို ဖျက်မှာ သေချာပါသလား?')) {
                 sirPackages = sirPackages.filter(p => p.id !== id);
-                renderSirPackages(); localStorage.setItem('sir_packages', JSON.stringify(sirPackages));
+                renderSirPackages(); 
+                localStorage.setItem('sir_packages', JSON.stringify(sirPackages));
+                if (typeof updateVGM === 'function') updateVGM();
             }
         }
 
@@ -1748,7 +1823,7 @@
             if(container) container.innerHTML = '';
         }
 
-        function calculateSir10Percent() {
+        function calculateSirWeightDetails() {
             let bagsLines = getLines('col_bags');
             let totalBags = 0;
             bagsLines.forEach(b => { totalBags += parseInt(b) || 0; });
@@ -1758,11 +1833,12 @@
                 return;
             }
 
-            let target10 = Math.ceil(totalBags * 0.10);
-            document.getElementById('sir-weighing-info').innerHTML = `Total 10% Bags: ${target10} Bags <br><span style="color:#555; font-size:12px;">(Total Shipment: ${totalBags} Bags)</span>`;
+            let percent = parseFloat(document.getElementById('sir-weight-percent').value) || 0.10;
+            let targetBags = Math.ceil(totalBags * percent);
+            document.getElementById('sir-weighing-info').innerHTML = `Total ${Math.round(percent * 100)}% Bags: ${targetBags} Bags <br><span style="color:#555; font-size:12px;">(Total Shipment: ${totalBags} Bags)</span>`;
             document.getElementById('sir-weighing-info').style.display = 'block';
 
-            let remaining = target10;
+            let remaining = targetBags;
             let rowCount = 0;
             let html = '';
             
@@ -1772,16 +1848,54 @@
                 remaining -= bagAssign;
                 
                 html += `
-                <div style="display: flex; align-items: center; gap: 8px; width:100%; box-sizing:border-box; margin-bottom: 8px;">
-                    <div style="flex: 0 0 30px; font-weight:bold; font-size:13px; color:#333; line-height:1.2; text-align:center;">Sr.<br>${rowCount}</div>
-                    <input type="number" id="sir-wlist-bag-${rowCount}" value="${bagAssign}" style="flex: 1; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:15px; text-align:center; min-width: 0; box-sizing: border-box;" placeholder="Bags">
-                    <input type="number" step="0.001" id="sir-wlist-wt-${rowCount}" style="flex: 1.5; padding:10px; border:1px solid #3498db; border-radius:4px; font-weight:bold; color:#000; font-size:15px; text-align:center; min-width: 0; box-sizing: border-box;" placeholder="Weight Kgs">
+                <div class="sir-weight-row" style="display: flex; align-items: center; gap: 8px; width:100%; box-sizing:border-box; margin-bottom: 8px;">
+                    <div class="sr-label" style="flex: 0 0 30px; font-weight:bold; font-size:13px; color:#333; line-height:1.2; text-align:center;">Sr.<br>${rowCount}</div>
+                    <input type="number" class="bag-input" id="sir-wlist-bag-${rowCount}" value="${bagAssign}" style="flex: 1; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:15px; text-align:center; min-width: 0; box-sizing: border-box;" placeholder="Bags">
+                    <input type="number" step="0.001" class="wt-input-sir" id="sir-wlist-wt-${rowCount}" style="flex: 1.5; padding:10px; border:1px solid #3498db; border-radius:4px; font-weight:bold; color:#000; font-size:15px; text-align:center; min-width: 0; box-sizing: border-box;" placeholder="Weight Kgs">
+                    <button class="btn-small btn-delete" style="flex: 0 0 32px; height: 32px; padding:0;" onclick="removeSirWeightRow(this)">x</button>
                 </div>`;
             }
             
             let container = document.getElementById('sir-weighing-container');
             container.innerHTML = html;
             container.dataset.rowCount = rowCount; 
+        }
+
+        function addSirWeightRow() {
+            let container = document.getElementById('sir-weighing-container');
+            let nextNum = container.querySelectorAll('.sir-weight-row').length + 1;
+            
+            let html = `
+            <div class="sir-weight-row" style="display: flex; align-items: center; gap: 8px; width:100%; box-sizing:border-box; margin-bottom: 8px;">
+                <div class="sr-label" style="flex: 0 0 30px; font-weight:bold; font-size:13px; color:#333; line-height:1.2; text-align:center;">Sr.<br>${nextNum}</div>
+                <input type="number" class="bag-input" id="sir-wlist-bag-${nextNum}" value="0" style="flex: 1; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:15px; text-align:center; min-width: 0; box-sizing: border-box;" placeholder="Bags">
+                <input type="number" step="0.001" class="wt-input-sir" id="sir-wlist-wt-${nextNum}" style="flex: 1.5; padding:10px; border:1px solid #3498db; border-radius:4px; font-weight:bold; color:#000; font-size:15px; text-align:center; min-width: 0; box-sizing: border-box;" placeholder="Weight Kgs">
+                <button class="btn-small btn-delete" style="flex: 0 0 32px; height: 32px; padding:0;" onclick="removeSirWeightRow(this)">x</button>
+            </div>`;
+            container.insertAdjacentHTML('beforeend', html);
+            reindexSirWeightRows();
+        }
+
+        function removeSirWeightRow(btn) {
+            btn.parentElement.remove();
+            reindexSirWeightRows();
+        }
+
+        function reindexSirWeightRows() {
+            let container = document.getElementById('sir-weighing-container');
+            let rows = container.querySelectorAll('.sir-weight-row');
+            rows.forEach((row, idx) => {
+                let num = idx + 1;
+                let label = row.querySelector('.sr-label');
+                if (label) label.innerHTML = `Sr.<br>${num}`;
+                
+                let bagInp = row.querySelector('.bag-input');
+                if (bagInp) bagInp.id = `sir-wlist-bag-${num}`;
+                
+                let wtInp = row.querySelector('.wt-input-sir');
+                if (wtInp) wtInp.id = `sir-wlist-wt-${num}`;
+            });
+            container.dataset.rowCount = rows.length;
         }
         
         window.addEventListener('DOMContentLoaded', () => {
@@ -1981,16 +2095,46 @@
                         // User Request: F column is SGS Seal weight (fixed 0.012), NOT Seal No.
                         wsVgm.getCell(`F${r}`).value = 0.012;
                         
-                        let startCol = 7; // G column = 7
-                        sirPkgs.forEach((pkg, idx) => {
-                            if(r === 10) wsVgm.getRow(9).getCell(startCol + idx).value = pkg.name; // Header
-                            let v = parseFloat(pkg.val) || 0;
-                            wsVgm.getRow(r).getCell(startCol + idx).value = v > 0 ? v : 0;
+                        let mergedCols = getMergedVgmColumns();
+                        let startCol = 7; // G column = 7 (Column G)
+                        
+                        // 1. Write dynamic columns from SIR/SGS (Limit to G-J to avoid overwriting K)
+                        mergedCols.forEach((col, idx) => {
+                            let colIdx = startCol + idx;
+                            if (colIdx >= 11) return; // Stop at Column K
+                            if(r === 10) wsVgm.getRow(9).getCell(colIdx).value = col.name; 
+                            let v = 0;
+                            if (col.source === 'sir') {
+                                v = parseFloat(col.val) || 0;
+                                // User Request: Prioritize SIR. Only use SGS if SIR is 0/empty.
+                                if (v === 0 && col.sgsIndex !== undefined && col.sgsIndex !== -1) {
+                                    let sgsInput = document.getElementById(`ctn-dyn-${i+1}-${col.sgsIndex}`);
+                                    v = parseFloat(sgsInput ? sgsInput.value : 0) || 0;
+                                }
+                            } else {
+                                let inputEl = document.getElementById(`ctn-dyn-${i+1}-${col.index}`);
+                                v = parseFloat(inputEl ? inputEl.value : 0) || 0;
+                            }
+                            wsVgm.getRow(r).getCell(colIdx).value = v > 0 ? v : 0;
                         });
 
-                        wsVgm.getCell(`L${r}`).value = { formula: `=SUM(E${r}:K${r})` }; 
-                        
-                        if (decTares[i]) { const decTareVal = parseFloat(decTares[i]); wsVgm.getCell(`K${r}`).value = isNaN(decTareVal) ? decTares[i] : decTareVal; }
+                        // 2. Write "ADD" column into next available slot in G-J
+                        let addColIdx = startCol + mergedCols.length;
+                        if (addColIdx < 11) {
+                            if(r === 10) wsVgm.getRow(9).getCell(addColIdx).value = "ADD";
+                            let addInput = document.getElementById(`ctn-addrem-${i+1}`);
+                            let addVal = parseFloat(addInput ? addInput.value : 0) || 0;
+                            wsVgm.getRow(r).getCell(addColIdx).value = addVal > 0 ? addVal : 0;
+                        }
+
+                        // 3. Write "Tare" to Column K (11)
+                        if (decTares[i]) { 
+                            const decTareVal = parseFloat(decTares[i]); 
+                            wsVgm.getCell(`K${r}`).value = isNaN(decTareVal) ? decTares[i] : decTareVal; 
+                        }
+
+                        // 4. Write "Total" to Column L (12) and Fix Formula
+                        wsVgm.getCell(`L${r}`).value = { formula: `=SUM(E${r}:K${r})` };
                         if (aveGrosses[i]) { const aveVal = parseFloat(aveGrosses[i]); wsVgm.getCell(`D${r}`).value = isNaN(aveVal) ? aveGrosses[i] : aveVal; }
                     }
                     processSheetSafe(wsVgm, 10, fclCount, targetRows, maxTemplateRows, 20);

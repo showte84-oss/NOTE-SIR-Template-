@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Combined SGS & SIR Web App</title>
+    <script src="capacitor.js"></script>
     
     <!-- SGS App Dependencies -->
     <meta name="theme-color" content="#2C5E43">
@@ -16,6 +17,8 @@
 
     <!-- SIR App Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         /* === Master App Switcher Styles === */
@@ -67,6 +70,9 @@
         .ctn-table td { border: 1px solid #7f8c8d; padding: 2px; background: #fff; vertical-align: middle; }
         .ctn-table td input { border: 1px solid transparent; width: 100%; padding: 6px 4px; box-sizing: border-box; background: transparent; text-align: center; outline: none; font-size: 13px; font-family: inherit; }
         .ctn-table td input:focus { border: 1px solid var(--primary-light); background: #fff; border-radius: 4px; }
+        .ctn-table th input { border: none; background: transparent; color: #333; font-weight: bold; text-align: center; width: 100%; font-size: 12px; outline: none; cursor: text; }
+        .ctn-table th input:focus { background: rgba(255,255,255,0.3); border-radius: 2px; }
+        .btn-header-del { color: #e74c3c; cursor: pointer; font-size: 10px; margin-left: 2px; vertical-align: middle; }
         
         .tally-row { display: flex; gap: 6px; align-items: center; justify-content: flex-start; margin-bottom: 10px; flex-wrap: nowrap; width: 100%; box-sizing: border-box; }
         .tally-row > * { flex: 0 0 auto; box-sizing: border-box; }
@@ -127,6 +133,7 @@
         .btn-sync { padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: 0.2s;}
         .btn-sync:hover { background-color: #218838; }
         .btn-sync:active { transform: scale(0.95); }
+
     </style>
 </head>
 <body>
@@ -247,6 +254,8 @@
             </div>
 
             <div id="vgmTab" class="tab-content"><div id="vgmDetailsArea"></div></div>
+
+
             <div class="footer-kna">By KNA</div>
         </div>
         
@@ -316,20 +325,20 @@
 
             <h3>၂။ General Information ဖြည့်သွင်းရန်</h3>
             <table class="info-table">
-                <tr><td class="info-label">Job Ref :</td><td colspan="2"><input type="text" id="job_ref"></td></tr>
-                <tr><td class="info-label">Departure from the office to loading point (Time) :</td><td colspan="2"><input type="text" id="dep_time" value="7:00 Hrs" placeholder="e.g., 7:00 Hrs"></td></tr>
-                <tr><td class="info-label">Departure Date :</td><td colspan="2"><input type="date" id="dep_date"></td></tr>
-                <tr><td class="info-label">Arrival (Time) :</td><td colspan="2"><input type="text" id="arr_time" placeholder="e.g., 14:30 Hrs"></td></tr>
-                <tr><td class="info-label">Arrival Date :</td><td colspan="2"><input type="date" id="arr_date"></td></tr>
-                <tr><td class="info-label">Shipper:</td><td colspan="2"><textarea id="shipper" rows="1"></textarea></td></tr>
-                <tr><td class="info-label">Buyer:</td><td colspan="2"><textarea id="buyer" rows="1"></textarea></td></tr>
-                <tr><td class="info-label">Commodity:</td><td colspan="2"><textarea id="commodity" rows="1"></textarea></td></tr>
-                <tr><td class="info-label">Quantity:</td><td colspan="2"><textarea id="quantity" rows="1"></textarea></td></tr>
-                <tr><td class="info-label">Packing:</td><td colspan="2"><textarea id="packing" rows="1"></textarea></td></tr>
-                <tr><td class="info-label">Place of inspection:</td><td colspan="2"><textarea id="place_insp" rows="1"></textarea></td></tr>
-                <tr><td class="info-label">Vessel:</td><td colspan="2"><textarea id="vessel" rows="1"></textarea></td></tr>
-                <tr><td class="info-label">Destination:</td><td colspan="2"><textarea id="destination" rows="1"></textarea></td></tr>
-                <tr><td class="info-label">Inspector's name</td><td colspan="2"><textarea id="inspector" rows="1">KYAW NAY AUNG</textarea></td></tr>
+            <tr><td class="info-label">Job Ref :</td><td colspan="2"><input type="text" id="job_ref" oninput="syncDataFromSIR()"></td></tr>
+	                <tr><td class="info-label">Departure from the office to loading point (Time) :</td><td colspan="2"><input type="text" id="dep_time" value="7:00 Hrs" placeholder="e.g., 7:00 Hrs"></td></tr>
+	                <tr><td class="info-label">Departure Date :</td><td colspan="2"><input type="date" id="dep_date" oninput="syncDataFromSIR()"></td></tr>
+	                <tr><td class="info-label">Arrival (Time) :</td><td colspan="2"><input type="text" id="arr_time" placeholder="e.g., 14:30 Hrs"></td></tr>
+	                <tr><td class="info-label">Arrival Date :</td><td colspan="2"><input type="date" id="arr_date"></td></tr>
+	                <tr><td class="info-label">Shipper:</td><td colspan="2"><textarea id="shipper" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
+	                <tr><td class="info-label">Buyer:</td><td colspan="2"><textarea id="buyer" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
+	                <tr><td class="info-label">Commodity:</td><td colspan="2"><textarea id="commodity" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
+	                <tr><td class="info-label">Quantity:</td><td colspan="2"><textarea id="quantity" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
+	                <tr><td class="info-label">Packing:</td><td colspan="2"><textarea id="packing" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
+	                <tr><td class="info-label">Place of inspection:</td><td colspan="2"><textarea id="place_insp" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
+	                <tr><td class="info-label">Vessel:</td><td colspan="2"><textarea id="vessel" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
+	                <tr><td class="info-label">Destination:</td><td colspan="2"><textarea id="destination" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
+	                <tr><td class="info-label">Inspector's name</td><td colspan="2"><textarea id="inspector" rows="1" oninput="syncDataFromSIR()">KYAW NAY AUNG</textarea></td></tr>
                 <tr><td class="info-label">Test weight :</td><td colspan="2"><input type="text" id="test_weight" placeholder="e.g., 10 Kgs"></td></tr>
                 <tr><td class="info-label">Test weight No :</td><td colspan="2"><input type="text" id="test_weight_no" placeholder="e.g., 50"></td></tr>
             </table>
@@ -339,17 +348,21 @@
                 <b>Auto Sync:</b> SGS မှ ကူးယူထားသော အချက်အလက်များ အလိုအလျောက် ဝင်နေပါမည်။ လိုအပ်ပါက ပြင်ဆင်နိုင်ပါသည်။
             </div>
 
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    
+                <button class="btn-sync" onclick="syncDataFromSIR()" style="background:#3498db; margin-bottom:0;">♻️ Sync to Surveyor Note</button>
+            </div>
             <div class="grid-container">
-                <div class="grid-col"><label>Container No</label><textarea id="col_ctn" class="col-input"></textarea></div>
-                <div class="grid-col"><label>Commence</label><textarea id="col_commence" class="col-input"></textarea></div>
-                <div class="grid-col"><label>Complete</label><textarea id="col_complete" class="col-input"></textarea></div>
-                <div class="grid-col"><label>No. of Bags</label><textarea id="col_bags" class="col-input"></textarea></div>
-                <div class="grid-col"><label>Gross (MT)</label><textarea id="col_gross" class="col-input"></textarea></div>
-                <div class="grid-col"><label>Tare (MT)</label><textarea id="col_tare" class="col-input"></textarea></div>
-                <div class="grid-col"><label>Seal No</label><textarea id="col_seal" class="col-input"></textarea></div>
-                <div class="grid-col"><label>Ave; Gross Wt</label><textarea id="col_ave_gross" class="col-input" placeholder="(kgs)"></textarea></div>
-                <div class="grid-col" title="Container Tare Weight (kgs)"><label>CTN TARE</label><textarea id="col_dec_tare" class="col-input" placeholder="(VGM)"></textarea></div>
-                <div class="grid-col"><label>Color</label><textarea id="col_color" class="col-input" placeholder="(Survey)"></textarea></div>
+                <div class="grid-col"><label>Container No</label><textarea id="col_ctn" class="col-input" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)"></textarea></div>
+                <div class="grid-col"><label>Commence</label><textarea id="col_commence" class="col-input" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)" onblur="autoPadTimeColumn('col_commence')"></textarea></div>
+                <div class="grid-col"><label>Complete</label><textarea id="col_complete" class="col-input" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)" onblur="autoPadTimeColumn('col_complete')"></textarea></div>
+                <div class="grid-col"><label>No. of Bags</label><textarea id="col_bags" class="col-input" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)"></textarea></div>
+                <div class="grid-col"><label>Gross (MT)</label><textarea id="col_gross" class="col-input" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)"></textarea></div>
+                <div class="grid-col"><label>Tare (MT)</label><textarea id="col_tare" class="col-input" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)"></textarea></div>
+                <div class="grid-col"><label>Seal No</label><textarea id="col_seal" class="col-input" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)"></textarea></div>
+                <div class="grid-col"><label>Ave; Gross Wt</label><textarea id="col_ave_gross" class="col-input" placeholder="(kgs)" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)"></textarea></div>
+                <div class="grid-col" title="Container Tare Weight (kgs)"><label>CTN TARE</label><textarea id="col_dec_tare" class="col-input" placeholder="(VGM)" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)"></textarea></div>
+                <div class="grid-col"><label>Color</label><textarea id="col_color" class="col-input" placeholder="(Survey)" oninput="syncDataFromSIR()" onchange="syncDataFromSIR()" onpaste="setTimeout(syncDataFromSIR, 100)"></textarea></div>
             </div>
 
             <h3>၄။ 10% Weighing Details (Weight List တွင် ထည့်သွင်းရန်)</h3>
@@ -461,15 +474,15 @@
                 aCtn.push(document.getElementById(`ctn-no-input-${i}`)?.value || '');
                 aCom.push(document.getElementById(`ctn-com-${i}`)?.value || '');
                 aComp.push(document.getElementById(`ctn-comp-${i}`)?.value || '');
-                
-                let b = document.getElementById(`ctn-bagcount-${i}`)?.value;
-                if(!b) b = document.getElementById(`ctn-bags-${i}`)?.innerText || '';
-                aBags.push(b);
-                
+
+                // Bags & Ave Gross Wt are intentionally left BLANK in the SIR Template by default —
+                // they're meant to be filled in manually there rather than auto-copied.
+                aBags.push('');
+                aAve.push('');
+
                 aGross.push(document.getElementById(`ctn-grossmt-${i}`)?.value || '');
                 aTare.push(document.getElementById(`ctn-taremt-${i}`)?.value || '');
                 aSeal.push(document.getElementById(`ctn-seal-${i}`)?.value || '');
-                aAve.push(document.getElementById(`ctn-avg-gross-${i}`)?.innerText || '');
                 aDecTare.push(document.getElementById(`ctn-tare-${i}`)?.value || '');
                 aColor.push(document.getElementById(`ctn-color-${i}`)?.value || '');
             }
@@ -500,6 +513,116 @@
                 btn.innerHTML = "✅ Synced Success!";
                 btn.style.backgroundColor = "#1e7e34";
                 setTimeout(() => { btn.innerHTML = old; btn.style.backgroundColor = "#28a745"; }, 2000);
+            }
+        }
+
+        // Zero-pads each line of a Commence/Complete textarea, e.g. "8:00" -> "08:00", once the user
+        // finishes typing (on blur) — done per-line rather than on every keystroke so it doesn't
+        // fight the cursor while typing.
+        function autoPadTimeColumn(id) {
+            let el = document.getElementById(id);
+            if (!el) return;
+            let changed = false;
+            let newLines = el.value.split('\n').map(line => {
+                let trimmed = line.trim();
+                let m = trimmed.match(/^(\d{1,2}):(\d{1,2})$/);
+                if (m) {
+                    let formatted = m[1].padStart(2, '0') + ':' + m[2].padStart(2, '0');
+                    if (formatted !== trimmed) changed = true;
+                    return formatted;
+                }
+                return line;
+            });
+            if (changed) {
+                el.value = newLines.join('\n');
+                syncDataFromSIR();
+            }
+        }
+
+        function syncDataFromSIR() {
+            // General Info Sync (SIR -> SGS)
+            const getVal = (id) => document.getElementById(id)?.value || '';
+            const setVal = (id, val) => { let el = document.getElementById(id); if(el) el.value = val; };
+
+            setVal('job-no-input', getVal('job_ref'));
+            setVal('shipper-input', getVal('shipper'));
+            setVal('buyer-input', getVal('buyer'));
+            setVal('commodity-input', getVal('commodity'));
+            setVal('quantity-input', getVal('quantity'));
+            setVal('packing-input', getVal('packing'));
+            setVal('inspection-place-input', getVal('place_insp'));
+            setVal('vessel-input', getVal('vessel'));
+            setVal('destination-input', getVal('destination'));
+            setVal('job-date-actual', getVal('dep_date'));
+            
+            let dateInp = document.getElementById('job-date-actual');
+            if(dateInp) updateDateDisplay(dateInp);
+            setVal('inspector-input', getVal('inspector'));
+
+            // Container Details Sync (SIR Textareas -> SGS Inputs)
+            const parseLines = (id) => (document.getElementById(id)?.value || '').split('\n').map(v => v.trim());
+            
+            let aCtn = parseLines('col_ctn');
+            let aCom = parseLines('col_commence');
+            let aComp = parseLines('col_complete');
+            let aBags = parseLines('col_bags');
+            let aGross = parseLines('col_gross');
+            let aTare = parseLines('col_tare');
+            let aSeal = parseLines('col_seal');
+            let aDecTare = parseLines('col_dec_tare');
+            let aColor = parseLines('col_color');
+
+            // Determine max count from any column that has data
+            let maxCount = Math.max(
+                aCtn.filter(c => c !== '').length,
+                aCom.filter(c => c !== '').length,
+                aComp.filter(c => c !== '').length,
+                aBags.filter(c => c !== '').length,
+                aGross.filter(c => c !== '').length,
+                aTare.filter(c => c !== '').length,
+                aSeal.filter(c => c !== '').length,
+                aDecTare.filter(c => c !== '').length,
+                aColor.filter(c => c !== '').length
+            );
+
+            if (maxCount < 1) maxCount = 1;
+            if (maxCount > 30) maxCount = 30; // Limit to 30 as per dropdown
+
+            let currentSelect = document.getElementById('noOfCtn');
+            if (maxCount > parseInt(currentSelect.value)) {
+                currentSelect.value = maxCount;
+                generateDynamicContent();
+            }
+
+            // Sync all rows
+            let noOfCtn = parseInt(document.getElementById('noOfCtn').value) || 1;
+            for(let i=1; i<=noOfCtn; i++) {
+                let idx = i-1;
+                setVal(`ctn-no-input-${i}`, aCtn[idx] || '');
+                setVal(`ctn-com-${i}`, aCom[idx] || '');
+                setVal(`ctn-comp-${i}`, aComp[idx] || '');
+                setVal(`ctn-bagcount-${i}`, aBags[idx] || '');
+                setVal(`ctn-grossmt-${i}`, aGross[idx] || '');
+                setVal(`ctn-taremt-${i}`, aTare[idx] || '');
+                setVal(`ctn-seal-${i}`, aSeal[idx] || '');
+                setVal(`ctn-tare-${i}`, aDecTare[idx] || '');
+                setVal(`ctn-color-${i}`, aColor[idx] || '');
+                
+                // Update title for weight tally
+                updateCtnTitle(i);
+            }
+            
+            saveToStorage();
+            recalculateAll();
+            updateVGM();
+            
+            // Visual feedback
+            let btn = document.querySelector('.btn-sync');
+            if(btn) {
+                let old = btn.innerHTML;
+                btn.innerHTML = "✅ Synced Success!";
+                btn.style.backgroundColor = "#1e7e34";
+                setTimeout(() => { btn.innerHTML = old; btn.style.backgroundColor = "#3498db"; }, 2000);
             }
         }
 
@@ -554,9 +677,35 @@
 
         let vgmOverrides = safeParseJSON(localStorage.getItem('sgs_vgm_overrides'), {});
         let isVgmEditing = false;
-        let customColumns = ['SGS Seal']; 
+        let customColumns = []; 
         let loadedCols = safeParseJSON(localStorage.getItem('sgs_custom_cols'), []);
         if (Array.isArray(loadedCols) && loadedCols.length > 0) customColumns = loadedCols;
+
+        let fixedHeadings = ["No.", "Truck No", "CTN No.", "Colour", "CTN Tare", "Bags", "Commenced", "Completed", "Gross MT", "Tare MT", "Seal", "Tally", "Key", "Additional", "SGS SEAL"];
+        let loadedHeadings = safeParseJSON(localStorage.getItem('sgs_fixed_headings'), []);
+        if (Array.isArray(loadedHeadings) && loadedHeadings.length === fixedHeadings.length) fixedHeadings = loadedHeadings;
+
+        function updateFixedHeading(idx, val) {
+            fixedHeadings[idx] = val;
+            localStorage.setItem('sgs_fixed_headings', JSON.stringify(fixedHeadings));
+            saveToStorage();
+            // Optional: generateDynamicContent() to refresh UI if needed
+        }
+
+        function removeFixedColumn(idx) {
+            let hName = fixedHeadings[idx] || "ဒီကော်လံ";
+            if(!confirm(`'${hName}' ကို ဖျက်မှာ သေချာပါသလား?`)) return;
+            fixedHeadings[idx] = ""; // Mark as hidden/empty
+            localStorage.setItem('sgs_fixed_headings', JSON.stringify(fixedHeadings));
+            generateDynamicContent();
+            saveToStorage();
+        }
+
+        function updateCustomHeading(idx, val) {
+            customColumns[idx] = val;
+            localStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns));
+            saveToStorage();
+        }
 
         window.addEventListener('DOMContentLoaded', function() {
             let selectCtn = document.getElementById('noOfCtn');
@@ -821,15 +970,46 @@
             document.getElementById('exportOptionsModal').style.display = 'none';
         }
 
-        function downloadCurrentExportFile() {
+        async function downloadCurrentExportFile() {
             if (!currentExportFile.blob) return;
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(currentExportFile.blob);
-            link.download = currentExportFile.fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            closeExportModal();
+            
+            const fileName = currentExportFile.fileName;
+            const blob = currentExportFile.blob;
+
+            if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                try {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    reader.onloadend = async () => {
+                        const base64Data = reader.result.split(',')[1];
+                        const savedFile = await Capacitor.Plugins.Filesystem.writeFile({
+                            path: fileName,
+                            data: base64Data,
+                            directory: 'CACHE'
+                        });
+
+                        await Capacitor.Plugins.Share.share({
+                            title: fileName,
+                            text: 'Exported File',
+                            url: savedFile.uri,
+                            dialogTitle: 'Save or Share File'
+                        });
+                        
+                        closeExportModal();
+                    };
+                } catch (error) {
+                    alert("Native Download Error: " + error.message);
+                    console.error(error);
+                }
+            } else {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                closeExportModal();
+            }
         }
 
         function sendToTelegramBot() {
@@ -1175,7 +1355,7 @@
                 let ctnOverrides = vgmOverrides[i] || {};
                 
                 // Fixed SGS Seal (Column F in Excel)
-                let sgsSealVal = ctnOverrides['SGS Seal'] !== undefined ? ctnOverrides['SGS Seal'] : '0.012';
+                let sgsSealVal = ctnOverrides['SGS Seal'] !== undefined ? ctnOverrides['SGS Seal'] : (document.getElementById(`ctn-sgs-seal-${i}`)?.value || '0.012');
                 addsSum += parseFloat(sgsSealVal) || 0;
                 let sgsSealHtml = isVgmEditing ? `<td><input type="text" class="vgm-input" value="${sgsSealVal}" oninput="handleVgmInput(${i}, 'SGS Seal', this.value)" style="width:60px;"></td>` : `<td>${sgsSealVal}</td>`;
 
@@ -1220,24 +1400,11 @@
             let weightArea = document.getElementById('weightTallyArea');
             let globalBags = document.getElementById('bagsPerCtn').value || '500';
 
-            let ctnTableHTML = `<div class="card"><div class="header-with-action"><h2>Container Details</h2><button class="btn-add-col" onclick="addCtnColumn()">➕ Add Column</button></div><div style="overflow-x:auto;"><table class="ctn-table" id="ctnDetailsMasterTable"><thead><tr>
-                <th style="min-width: 40px;">No.</th>
-                <th style="min-width: 120px;">Truck</th>
-                <th style="min-width: 150px;">CTN No.</th>
-                <th style="min-width: 80px;">Color</th>
-                <th style="min-width: 90px;">Tare</th>
-                <th style="min-width: 80px;">Bags</th>
-                <th style="min-width: 100px;">Comm</th>
-                <th style="min-width: 100px;">Comp</th>
-                <th style="min-width: 90px;">G.MT</th>
-                <th style="min-width: 90px;">T.MT</th>
-                <th style="min-width: 120px;">Seal</th>
-                <th style="min-width: 80px;">Tally</th>
-                <th style="min-width: 80px;">Key</th>
-                <th style="min-width: 90px;">ADD</th>
-                ${customColumns.map((c, idx) => `<th style="min-width: 100px;">${c}<br><small onclick="removeCtnColumn(${idx})" style="color:red; cursor:pointer;">x</small></th>`).join('')}
-                <th style="min-width: 40px;" class="exclude-export">🗑️</th>
-            </tr></thead><tbody>`;
+	            let ctnTableHTML = `<div class="card"><div class="header-with-action"><h2>Container Details</h2><button class="btn-add-col" onclick="addCtnColumn()">➕ Add Column</button></div><div style="overflow-x:auto;"><table class="ctn-table" id="ctnDetailsMasterTable"><thead><tr>
+		                ${fixedHeadings.map((h, idx) => h === "" ? "" : `<th style="min-width: ${idx===0?40:idx===1?120:idx===2?150:100}px;"><div style="display:flex; align-items:center; justify-content:center; gap:2px;"><input type="text" value="${h}" onchange="updateFixedHeading(${idx}, this.value)" placeholder="Heading"><span class="btn-header-del" onclick="removeFixedColumn(${idx})" title="Delete Column">×</span></div></th>`).join('')}
+		                ${customColumns.map((c, idx) => `<th style="min-width: 100px;"><div style="display:flex; align-items:center; justify-content:center; gap:2px;"><input type="text" value="${c}" onchange="updateCustomHeading(${idx}, this.value)"><span class="btn-header-del" onclick="removeCtnColumn(${idx})" title="Delete Column">×</span></div></th>`).join('')}
+		                <th style="min-width: 40px;">🗑️</th>
+	            </tr></thead><tbody>`;
             
             weightArea.innerHTML = ''; 
             let currentData = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
@@ -1250,29 +1417,29 @@
                 let ctnBags = currentData.inputs[`ctn-bagcount-${i}`];
                 let bagVal = (ctnBags !== undefined && ctnBags !== '') ? ctnBags : globalBags;
 
-                ctnTableHTML += `<tr>
-                    <td style="text-align: center;">${i}</td>
-                    <td><input type="text" id="ctn-truck-${i}" style="min-width: 110px;" oninput="saveToStorage()"></td>
-                    <td><input type="text" id="ctn-no-input-${i}" style="font-weight:bold; min-width: 140px;" oninput="updateCtnTitle(${i}); updateVGM(); saveToStorage();"></td>
-                    <td><input type="text" id="ctn-color-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>
-                    <td><input type="number" step="0.001" id="ctn-tare-${i}" style="min-width: 80px;" oninput="updateVGM(); saveToStorage();"></td>
-                    <td><input type="number" id="ctn-bagcount-${i}" value="${bagVal}" style="min-width: 70px;" oninput="updateVGM(); saveToStorage();"></td>
-                    <td><input type="time" lang="en-GB" id="ctn-com-${i}" style="min-width: 90px;" oninput="saveToStorage()"></td>
-                    <td><input type="time" lang="en-GB" id="ctn-comp-${i}" style="min-width: 90px;" oninput="saveToStorage()"></td>
-                    <td><input type="number" step="0.001" id="ctn-grossmt-${i}" style="min-width: 80px;" oninput="saveToStorage()"></td>
-                    <td><input type="number" step="0.001" id="ctn-taremt-${i}" style="min-width: 80px;" oninput="saveToStorage()"></td>
-                    <td><input type="text" id="ctn-seal-${i}" style="min-width: 110px;" oninput="saveToStorage()"></td>
-                    <td><input type="text" id="ctn-tallystr-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>
-                    <td><input type="text" id="ctn-key-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>
-                    <td><input type="number" step="0.001" id="ctn-addrem-${i}" style="min-width: 80px;" oninput="updateVGM(); calculateGrand(); saveToStorage();"></td>
-                    ${customColumns.map((c, idx) => {
-                        let existing = currentData.inputs[`ctn-dyn-${i}-${idx}`];
-                        let val = (existing !== undefined && existing !== null) ? existing : '';
-                        if (val === '' && c.trim().toLowerCase() === 'sgs seal') { val = '0.012'; }
-                        return `<td><input type="text" id="ctn-dyn-${i}-${idx}" value="${val}" style="min-width: 90px;" oninput="updateVGM(); saveToStorage();"></td>`;
-                    }).join('')}
-                    <td style="text-align:center;" class="exclude-export"><button onclick="deleteCtnRow(${i})" style="border:none; border-radius:4px; padding:4px 8px; background:#e74c3c; color:white; cursor:pointer;">x</button></td>
-                </tr>`;
+	                ctnTableHTML += `<tr>
+	                    ${fixedHeadings[0] !== "" ? `<td style="text-align: center;">${i}</td>` : ""}
+	                    ${fixedHeadings[1] !== "" ? `<td><input type="text" id="ctn-truck-${i}" style="min-width: 110px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[2] !== "" ? `<td><input type="text" id="ctn-no-input-${i}" style="font-weight:bold; min-width: 140px;" oninput="updateCtnTitle(${i}); updateVGM(); saveToStorage();"></td>` : ""}
+	                    ${fixedHeadings[3] !== "" ? `<td><input type="text" id="ctn-color-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[4] !== "" ? `<td><input type="number" step="0.001" id="ctn-tare-${i}" style="min-width: 80px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
+	                    ${fixedHeadings[5] !== "" ? `<td><input type="number" id="ctn-bagcount-${i}" value="${bagVal}" style="min-width: 70px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
+	                    ${fixedHeadings[6] !== "" ? `<td><input type="time" lang="en-GB" id="ctn-com-${i}" style="min-width: 90px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[7] !== "" ? `<td><input type="time" lang="en-GB" id="ctn-comp-${i}" style="min-width: 90px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[8] !== "" ? `<td><input type="number" step="0.001" id="ctn-grossmt-${i}" style="min-width: 80px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[9] !== "" ? `<td><input type="number" step="0.001" id="ctn-taremt-${i}" style="min-width: 80px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[10] !== "" ? `<td><input type="text" id="ctn-seal-${i}" style="min-width: 110px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[11] !== "" ? `<td><input type="text" id="ctn-tallystr-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[12] !== "" ? `<td><input type="text" id="ctn-key-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
+	                    ${fixedHeadings[13] !== "" ? `<td><input type="number" step="0.001" id="ctn-addrem-${i}" style="min-width: 80px;" oninput="updateVGM(); calculateGrand(); saveToStorage();"></td>` : ""}
+	                    ${fixedHeadings[14] !== "" ? `<td><input type="text" id="ctn-sgs-seal-${i}" value="${currentData.inputs[`ctn-sgs-seal-${i}`] || '0.012'}" style="min-width: 90px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
+	                    ${customColumns.map((c, idx) => {
+	                        let existing = currentData.inputs[`ctn-dyn-${i}-${idx}`];
+	                        let val = (existing !== undefined && existing !== null) ? existing : '';
+	                        return `<td><input type="text" id="ctn-dyn-${i}-${idx}" value="${val}" style="min-width: 90px;" oninput="updateVGM(); saveToStorage();"></td>`;
+	                    }).join('')}
+		                    <td style="text-align:center;"><button onclick="deleteCtnRow(${i})" style="border:none; border-radius:4px; padding:4px 8px; background:#e74c3c; color:white; cursor:pointer;">x</button></td>
+	                </tr>`;
 
                 let initZero = formatWt(0);
 
@@ -1491,9 +1658,9 @@
                     <p style="text-align:center; margin:5px 0; font-weight:bold;">Job No: ${document.getElementById('job-no-input').value} | Date: ${dateVal}</p>
                     
                     <h4 style="background:#f2f2f2; padding:6px; border:1px solid #444; margin:10px 0 5px 0;">JOB DETAILS</h4>
-                    <table style="width:100%; border-collapse:collapse; font-size:11px;">
-                        ${Array.from(document.querySelectorAll('#jobDetailsTable tr')).map(tr => `<tr><th style="border:1px solid #444; padding:5px; text-align:left; width:35%;">${tr.cells[0].textContent}</th><td style="border:1px solid #444; padding:5px;">${tr.cells[1].querySelector('input:not(.exclude-export)')?.value || ''}</td></tr>`).join('')}
-                    </table>
+	                    <table style="width:100%; border-collapse:collapse; font-size:11px;">
+	                        ${Array.from(document.querySelectorAll('#jobDetailsTable tr')).map(tr => `<tr><th style="border:1px solid #444; padding:5px; text-align:left; width:35%;">${tr.cells[0].textContent}</th><td style="border:1px solid #444; padding:5px;"><input type="text" value="${tr.cells[1].querySelector('input:not(.exclude-export)')?.value || ''}" style="width:100%; border:none; background:transparent; font-size:11px;"></td></tr>`).join('')}
+	                    </table>
                     
                     <h4 style="background:#f2f2f2; padding:6px; border:1px solid #444; margin:15px 0 5px 0;">CONTAINER DETAILS</h4>
                     <div style="width:100%;">
@@ -1524,11 +1691,13 @@
             renderArea.innerHTML = html; 
             
             renderArea.querySelectorAll('.exclude-export, button, small').forEach(el => el.remove());
-            renderArea.querySelectorAll('input').forEach(inp => { 
-                let span = document.createElement('span'); 
-                span.textContent = inp.value || inp.getAttribute('value') || ''; 
-                inp.parentNode.replaceChild(span, inp); 
-            });
+	            renderArea.querySelectorAll('input').forEach(inp => { 
+	                let originalInp = document.getElementById(inp.id);
+	                let val = originalInp ? originalInp.value : (inp.value || inp.getAttribute('value') || '');
+	                let span = document.createElement('span'); 
+	                span.textContent = val; 
+	                inp.parentNode.replaceChild(span, inp); 
+	            });
 
             renderArea.querySelectorAll('th, td').forEach(cell => {
                 cell.style.border = '1px solid #444';
@@ -1647,9 +1816,12 @@
                     XLSX.utils.book_append_sheet(wb, wsSet, "Weight Setup");
 
                     let noOfCtn = parseInt(document.getElementById('noOfCtn').value) || 1;
-                    let cData = [["CONTAINER DETAILS"], [], ["No.", "Truck No.", "CTN No.", "Colour", "Tare Weight", "No. of Bags", "Commence", "Complete", "Gross MT", "Tare MT", "Seal No", "Tally", "Key", "ADD Wt;", ...customColumns]];
+                    let activeFixedIndices = fixedHeadings.map((h, i) => h !== "" ? i : -1).filter(i => i !== -1);
+                    let activeFixedHeadings = activeFixedIndices.map(i => fixedHeadings[i]);
+                    
+                    let cData = [["CONTAINER DETAILS"], [], [...activeFixedHeadings, ...customColumns]];
                     for(let i=1; i<=noOfCtn; i++) {
-                        let r = [
+                        let fullRow = [
                             i, 
                             document.getElementById(`ctn-truck-${i}`)?.value || '', 
                             document.getElementById(`ctn-no-input-${i}`)?.value || '', 
@@ -1663,8 +1835,10 @@
                             document.getElementById(`ctn-seal-${i}`)?.value || '', 
                             document.getElementById(`ctn-tallystr-${i}`)?.value || '', 
                             document.getElementById(`ctn-key-${i}`)?.value || '', 
-                            document.getElementById(`ctn-addrem-${i}`)?.value || ''
+                            document.getElementById(`ctn-addrem-${i}`)?.value || '', 
+                            document.getElementById(`ctn-sgs-seal-${i}`)?.value || ''
                         ];
+                        let r = activeFixedIndices.map(idx => fullRow[idx]);
                         customColumns.forEach((_, idx) => r.push(document.getElementById(`ctn-dyn-${i}-${idx}`)?.value || '')); 
                         cData.push(r);
                     }
@@ -1673,7 +1847,7 @@
                     wsCtn['!cols'] = getFitCols(cData); 
                     XLSX.utils.book_append_sheet(wb, wsCtn, "Ctn Details");
 
-                    let vData = [["VGM SUMMARY"], [], ["Sr.", "Container Number", "Number of Bags", "Per bag Weight", "Total Cargo Weight", ...customColumns, "Additional Kgs", "Container Tare", "Total Weight (kgs)"]];
+                    let vData = [["VGM SUMMARY"], [], ["Sr.", "Container Number", "Number of Bags", "Per bag Weight", "Total Cargo Weight", "SGS Seal", ...customColumns, "Additional Kgs", "Container Tare", "Total Weight (kgs)"]];
                     for(let i=1; i<=noOfCtn; i++) {
                         let ctnNo = document.getElementById(`ctn-no-input-${i}`)?.value || '-';
                         let bags = document.getElementById(`ctn-bagcount-${i}`)?.value || document.getElementById(`ctn-bags-${i}`)?.textContent || '0';
@@ -2076,21 +2250,21 @@
 
                 const wsTally = workbook.getWorksheet('TALLY FORM');
                 if (wsTally) {
-                    for (let i = 0; i < fclCount; i++) { const r = 11 + i; wsTally.getCell(`A${r}`).value = i + 1; wsTally.getCell(`B${r}`).value = { formula: `='STUFFING REPORT'!B${21 + i}` }; }
+                    for (let i = 0; i < fclCount; i++) { const r = 11 + i; wsTally.getCell(`A${r}`).value = i + 1; wsTally.getCell(`B${r}`).value = { formula: `'STUFFING REPORT'!B${21 + i}` }; }
                     processSheetSafe(wsTally, 11, fclCount, targetRows, maxTemplateRows, 20);
                 }
 
                 const wsVgm = workbook.getWorksheet('VGM REPORT');
                 if (wsVgm) {
                     let sirPkgs = safeParseJSON(localStorage.getItem('sir_packages'), []);
-                    const lastCtnRow = 20 + fclCount; wsVgm.getCell('L6').value = { formula: `='STUFFING REPORT'!E${lastCtnRow}` };
+                    const lastCtnRow = 20 + fclCount; wsVgm.getCell('L6').value = { formula: `'STUFFING REPORT'!E${lastCtnRow}` };
                     
                     for (let i = 0; i < fclCount; i++) {
                         const r = 10 + i; 
                         wsVgm.getCell(`A${r}`).value = i + 1; 
-                        wsVgm.getCell(`B${r}`).value = { formula: `='STUFFING REPORT'!B${21 + i}` }; 
-                        wsVgm.getCell(`C${r}`).value = { formula: `='STUFFING REPORT'!F${21 + i}` }; 
-                        wsVgm.getCell(`E${r}`).value = { formula: `=C${r}*D${r}` }; 
+                        wsVgm.getCell(`B${r}`).value = { formula: `'STUFFING REPORT'!B${21 + i}` }; 
+                        wsVgm.getCell(`C${r}`).value = { formula: `'STUFFING REPORT'!F${21 + i}` }; 
+                        wsVgm.getCell(`E${r}`).value = { formula: `C${r}*D${r}` }; 
                         
                         // User Request: F column is SGS Seal weight (fixed 0.012), NOT Seal No.
                         wsVgm.getCell(`F${r}`).value = 0.012;
@@ -2134,7 +2308,7 @@
                         }
 
                         // 4. Write "Total" to Column L (12) and Fix Formula
-                        wsVgm.getCell(`L${r}`).value = { formula: `=SUM(E${r}:K${r})` };
+                        wsVgm.getCell(`L${r}`).value = { formula: `SUM(E${r}:K${r})` };
                         if (aveGrosses[i]) { const aveVal = parseFloat(aveGrosses[i]); wsVgm.getCell(`D${r}`).value = isNaN(aveVal) ? aveGrosses[i] : aveVal; }
                     }
                     processSheetSafe(wsVgm, 10, fclCount, targetRows, maxTemplateRows, 20);
@@ -2142,7 +2316,7 @@
 
                 const wsSurvey = workbook.getWorksheet('CTN SURVEY REPORT');
                 if (wsSurvey) {
-                    for (let i = 0; i < fclCount; i++) { const r = 9 + i; wsSurvey.getCell(`A${r}`).value = i + 1; wsSurvey.getCell(`B${r}`).value = { formula: `='STUFFING REPORT'!B${21 + i}` }; if (colors[i]) { wsSurvey.getCell(`I${r}`).value = colors[i]; } }
+                    for (let i = 0; i < fclCount; i++) { const r = 9 + i; wsSurvey.getCell(`A${r}`).value = i + 1; wsSurvey.getCell(`B${r}`).value = { formula: `'STUFFING REPORT'!B${21 + i}` }; if (colors[i]) { wsSurvey.getCell(`I${r}`).value = colors[i]; } }
                     processSheetSafe(wsSurvey, 9, fclCount, targetRows, maxTemplateRows, 20);
                 }
 

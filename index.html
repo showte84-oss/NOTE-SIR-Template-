@@ -435,6 +435,7 @@
     <!-- MASTER & APP SCRIPTS                       -->
     <!-- ========================================== -->
     <script>
+        let vgmOverrides = {}; // Global scope for sync consistency
         // --- Master App Switcher & Auto Sync Logic ---
         function switchApp(app) {
             document.getElementById('sgs-app').style.display = app === 'sgs' ? 'block' : 'none';
@@ -475,10 +476,11 @@
                 aCom.push(document.getElementById(`ctn-com-${i}`)?.value || '');
                 aComp.push(document.getElementById(`ctn-comp-${i}`)?.value || '');
 
-                // Bags & Ave Gross Wt are intentionally left BLANK in the SIR Template by default —
-                // they're meant to be filled in manually there rather than auto-copied.
-                aBags.push('');
-                aAve.push('');
+                // Automatically sync Bags & Ave Gross Wt from SGS Note to SIR Template
+                let bagsVal = document.getElementById(`ctn-bagcount-${i}`)?.value || '';
+                let avgGrossVal = document.getElementById(`ctn-avg-gross-${i}`)?.innerText || '';
+                aBags.push(bagsVal);
+                aAve.push(avgGrossVal);
 
                 aGross.push(document.getElementById(`ctn-grossmt-${i}`)?.value || '');
                 aTare.push(document.getElementById(`ctn-taremt-${i}`)?.value || '');
@@ -569,6 +571,7 @@
             let aGross = parseLines('col_gross');
             let aTare = parseLines('col_tare');
             let aSeal = parseLines('col_seal');
+            let aAve_gross = parseLines('col_ave_gross');
             let aDecTare = parseLines('col_dec_tare');
             let aColor = parseLines('col_color');
 
@@ -601,7 +604,19 @@
                 setVal(`ctn-no-input-${i}`, aCtn[idx] || '');
                 setVal(`ctn-com-${i}`, aCom[idx] || '');
                 setVal(`ctn-comp-${i}`, aComp[idx] || '');
-                setVal(`ctn-bagcount-${i}`, aBags[idx] || '');
+                
+                // Sync Bags and Ave Gross Wt back to SGS Note's VGM Summary via overrides
+                let bagsVal = aBags[idx] || '';
+                let avgGrossVal = aAve_gross[idx] || ''; // Using aAve_gross as parsed from col_ave_gross
+                
+                setVal(`ctn-bagcount-${i}`, bagsVal);
+                
+                if (bagsVal !== '' || avgGrossVal !== '') {
+                    if (!vgmOverrides[i]) vgmOverrides[i] = {};
+                    if (bagsVal !== '') vgmOverrides[i]['Bags'] = bagsVal;
+                    if (avgGrossVal !== '') vgmOverrides[i]['Ave; Gross Wt'] = avgGrossVal;
+                }
+
                 setVal(`ctn-grossmt-${i}`, aGross[idx] || '');
                 setVal(`ctn-taremt-${i}`, aTare[idx] || '');
                 setVal(`ctn-seal-${i}`, aSeal[idx] || '');
@@ -675,7 +690,7 @@
             }
         }
 
-        let vgmOverrides = safeParseJSON(localStorage.getItem('sgs_vgm_overrides'), {});
+        vgmOverrides = safeParseJSON(localStorage.getItem('sgs_vgm_overrides'), {});
         let isVgmEditing = false;
         let customColumns = []; 
         let loadedCols = safeParseJSON(localStorage.getItem('sgs_custom_cols'), []);
@@ -693,12 +708,19 @@
         }
 
         function removeFixedColumn(idx) {
-            let hName = fixedHeadings[idx] || "ဒီကော်လံ";
+            if (!Number.isInteger(idx) || idx < 0 || idx >= fixedHeadings.length || fixedHeadings[idx] === "") return;
+
+            let hName = fixedHeadings[idx];
             if(!confirm(`'${hName}' ကို ဖျက်မှာ သေချာပါသလား?`)) return;
-            fixedHeadings[idx] = ""; // Mark as hidden/empty
-            localStorage.setItem('sgs_fixed_headings', JSON.stringify(fixedHeadings));
-            generateDynamicContent();
+
+            // Save the current form values before rebuilding the table.
+            // This prevents a header-only delete from clearing every remaining column's data.
             saveToStorage();
+            fixedHeadings[idx] = ""; // Hide only the selected fixed column.
+            localStorage.setItem('sgs_fixed_headings', JSON.stringify(fixedHeadings));
+
+            // Rebuild the visible columns, then restore all saved values for the columns that remain.
+            loadFromStorage();
         }
 
         function updateCustomHeading(idx, val) {
@@ -1218,26 +1240,42 @@
         }
 
         function removeCtnColumn(idx) {
+            if (!Number.isInteger(idx) || idx < 0 || idx >= customColumns.length) return;
+
             let colName = customColumns[idx];
             if(!confirm(`'${colName}' ကော်လံကို ဖျက်မှာ သေချာပါသလား?`)) return;
-            saveToStorage(); 
+
+            // Capture the current values before changing the column layout.
+            saveToStorage();
             let data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs: {}, tallies: {}});
+            if (!data.inputs) data.inputs = {};
+
             let noOfCtn = parseInt(data.inputs['noOfCtn']) || 1;
+            let lastCustomIndex = customColumns.length - 1;
+
+            // Shift only the custom columns to the right of the deleted column.
+            // Fixed Container Details fields and the remaining custom-column values are left intact.
             for(let i = 1; i <= noOfCtn; i++) {
-                for(let j = idx; j < customColumns.length; j++) {
-                    data.inputs[`ctn-dyn-${i}-${j}`] = data.inputs[`ctn-dyn-${i}-${j+1}`] || '';
+                for(let j = idx; j < lastCustomIndex; j++) {
+                    let nextValue = data.inputs[`ctn-dyn-${i}-${j + 1}`];
+                    data.inputs[`ctn-dyn-${i}-${j}`] = nextValue ?? '';
                 }
-                delete data.inputs[`ctn-dyn-${i}-${customColumns.length}`];
+                delete data.inputs[`ctn-dyn-${i}-${lastCustomIndex}`];
             }
+
+            // Remove only the VGM override associated with this deleted custom column.
             let overrides = safeParseJSON(localStorage.getItem('sgs_vgm_overrides'), {});
             for(let i = 1; i <= noOfCtn; i++) {
                 if(overrides[i] && overrides[i][colName] !== undefined) delete overrides[i][colName];
             }
+
             customColumns.splice(idx, 1);
             localStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns));
             localStorage.setItem('sgs_vgm_overrides', JSON.stringify(overrides));
             localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
-            loadFromStorage(); 
+
+            // Re-render and restore the saved values for every remaining column.
+            loadFromStorage();
         }
 
         function deleteCtnRow(index) {
@@ -1347,12 +1385,14 @@
             
             for (let i = 1; i <= noOfCtn; i++) {
                 let ctnNo = document.getElementById(`ctn-no-input-${i}`)?.value || '-';
-                let bags = parseFloat(document.getElementById(`ctn-bagcount-${i}`)?.value) || (parseFloat(document.getElementById(`ctn-bags-${i}`)?.innerText) || 0);
-                let avgWt = parseFloat(document.getElementById(`ctn-avg-gross-${i}`)?.innerText) || 0;
+                let ctnOverrides = vgmOverrides[i] || {};
+                
+                // Priority: SIR Sync (via Overrides) > SGS Input > SGS Calculated
+                let bags = ctnOverrides['Bags'] !== undefined ? (parseFloat(ctnOverrides['Bags']) || 0) : (parseFloat(document.getElementById(`ctn-bagcount-${i}`)?.value) || (parseFloat(document.getElementById(`ctn-bags-${i}`)?.innerText) || 0));
+                let avgWt = ctnOverrides['Ave; Gross Wt'] !== undefined ? (parseFloat(ctnOverrides['Ave; Gross Wt']) || 0) : (parseFloat(document.getElementById(`ctn-avg-gross-${i}`)?.innerText) || 0);
                 let cargoWt = truncWt(bags * avgWt);
                 
                 let addsSum = 0;
-                let ctnOverrides = vgmOverrides[i] || {};
                 
                 // Fixed SGS Seal (Column F in Excel)
                 let sgsSealVal = ctnOverrides['SGS Seal'] !== undefined ? ctnOverrides['SGS Seal'] : (document.getElementById(`ctn-sgs-seal-${i}`)?.value || '0.012');

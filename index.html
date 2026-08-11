@@ -117,7 +117,7 @@
         .info-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
         .info-table td { border: 1px solid #ccc; padding: 6px; }
         .info-label { width: 35%; background: #f9f9f9; font-weight: bold; font-size: 14px; color: #333; }
-        .info-table input[type="text"], .info-table input[type="date"], .info-table textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: inherit; }
+        .info-table input[type="text"], .info-table input[type="date"], .info-table textarea, .info-table select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; font-family: inherit; }
         .info-table textarea { resize: none; min-height: 40px; overflow: hidden; }
         .info-table input:focus, .info-table textarea:focus { outline: none; border-color: #007bff; }
         .instruction { font-size: 14px; color: #333; background: #e2f0d9; padding: 10px 15px; border-left: 5px solid #28a745; margin-bottom: 20px; line-height: 1.5; }
@@ -339,7 +339,13 @@
 	                <tr><td class="info-label">Vessel:</td><td colspan="2"><textarea id="vessel" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
 	                <tr><td class="info-label">Destination:</td><td colspan="2"><textarea id="destination" rows="1" oninput="syncDataFromSIR()"></textarea></td></tr>
 	                <tr><td class="info-label">Inspector's name</td><td colspan="2"><textarea id="inspector" rows="1" oninput="syncDataFromSIR()">KYAW NAY AUNG</textarea></td></tr>
-                <tr><td class="info-label">Test weight :</td><td colspan="2"><input type="text" id="test_weight" placeholder="e.g., 10 Kgs"></td></tr>
+	                <tr><td class="info-label">Test weight :</td><td colspan="2">
+                        <select id="test_weight">
+                            <option value="">-- Select Weight --</option>
+                            <option value="10 Kgs">10 Kgs</option>
+                            <option value="20 Kgs">20 Kgs</option>
+                        </select>
+                    </td></tr>
                 <tr><td class="info-label">Test weight No :</td><td colspan="2"><input type="text" id="test_weight_no" placeholder="e.g., 50"></td></tr>
             </table>
 
@@ -436,6 +442,7 @@
     <!-- ========================================== -->
     <script>
         let vgmOverrides = {}; // Global scope for sync consistency
+        const DEFAULT_FIXED_HEADINGS = ["No.", "Truck No", "CTN No.", "Colour", "CTN Tare", "Bags", "Ave; Gross Wt", "Commenced", "Completed", "Gross MT", "Tare MT", "Seal", "Tally", "Key", "Additional", "SGS SEAL"];
         // --- Master App Switcher & Auto Sync Logic ---
         function switchApp(app) {
             document.getElementById('sgs-app').style.display = app === 'sgs' ? 'block' : 'none';
@@ -478,7 +485,8 @@
 
                 // Automatically sync Bags & Ave Gross Wt from SGS Note to SIR Template
                 let bagsVal = document.getElementById(`ctn-bagcount-${i}`)?.value || '';
-                let avgGrossVal = document.getElementById(`ctn-avg-gross-${i}`)?.innerText || '';
+                // Prefer the input field in Container Details, fallback to calculated label
+                let avgGrossVal = document.getElementById(`ctn-avg-gross-input-${i}`)?.value || document.getElementById(`ctn-avg-gross-${i}`)?.innerText || '';
                 aBags.push(bagsVal);
                 aAve.push(avgGrossVal);
 
@@ -610,6 +618,7 @@
                 let avgGrossVal = aAve_gross[idx] || ''; // Using aAve_gross as parsed from col_ave_gross
                 
                 setVal(`ctn-bagcount-${i}`, bagsVal);
+                setVal(`ctn-avg-gross-input-${i}`, avgGrossVal);
                 
                 if (bagsVal !== '' || avgGrossVal !== '') {
                     if (!vgmOverrides[i]) vgmOverrides[i] = {};
@@ -696,7 +705,7 @@
         let loadedCols = safeParseJSON(localStorage.getItem('sgs_custom_cols'), []);
         if (Array.isArray(loadedCols) && loadedCols.length > 0) customColumns = loadedCols;
 
-        let fixedHeadings = ["No.", "Truck No", "CTN No.", "Colour", "CTN Tare", "Bags", "Commenced", "Completed", "Gross MT", "Tare MT", "Seal", "Tally", "Key", "Additional", "SGS SEAL"];
+        let fixedHeadings = [...DEFAULT_FIXED_HEADINGS];
         let loadedHeadings = safeParseJSON(localStorage.getItem('sgs_fixed_headings'), []);
         if (Array.isArray(loadedHeadings) && loadedHeadings.length === fixedHeadings.length) fixedHeadings = loadedHeadings;
 
@@ -846,6 +855,7 @@
                 appData: localStorage.getItem('sgs_app_data_final') || "{}",
                 vgmData: localStorage.getItem('sgs_vgm_overrides') || "{}",
                 customCols: localStorage.getItem('sgs_custom_cols') || "[]",
+                fixedHeadings: JSON.stringify(fixedHeadings),
                 sirPkgs: localStorage.getItem('sir_packages') || "[]",
                 date: dateStr
             };
@@ -898,8 +908,13 @@
             document.getElementById('marking-preview').style.display = 'none';
             document.getElementById('marking-preview').src = "";
             vgmOverrides = {};
+            // Reset column schema to defaults for new job
+            fixedHeadings = [...DEFAULT_FIXED_HEADINGS];
+            customColumns = [];
             localStorage.removeItem('sgs_app_data_final'); 
             localStorage.removeItem('sgs_vgm_overrides');
+            localStorage.removeItem('sgs_custom_cols');
+            localStorage.removeItem('sgs_fixed_headings');
             setTodayDate();
             generateDynamicContent();
         }
@@ -954,6 +969,9 @@
                     localStorage.setItem('sgs_app_data_final', savedJobs[jobNo].appData || "{}");
                     localStorage.setItem('sgs_vgm_overrides', savedJobs[jobNo].vgmData || "{}");
                     localStorage.setItem('sgs_custom_cols', savedJobs[jobNo].customCols || "[]");
+                    if(savedJobs[jobNo].fixedHeadings) {
+                        localStorage.setItem('sgs_fixed_headings', savedJobs[jobNo].fixedHeadings);
+                    }
                     
                     if(savedJobs[jobNo].sirPkgs) {
                         localStorage.setItem('sir_packages', savedJobs[jobNo].sirPkgs);
@@ -1457,23 +1475,24 @@
                 let ctnBags = currentData.inputs[`ctn-bagcount-${i}`];
                 let bagVal = (ctnBags !== undefined && ctnBags !== '') ? ctnBags : globalBags;
 
-	                ctnTableHTML += `<tr>
-	                    ${fixedHeadings[0] !== "" ? `<td style="text-align: center;">${i}</td>` : ""}
-	                    ${fixedHeadings[1] !== "" ? `<td><input type="text" id="ctn-truck-${i}" style="min-width: 110px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[2] !== "" ? `<td><input type="text" id="ctn-no-input-${i}" style="font-weight:bold; min-width: 140px;" oninput="updateCtnTitle(${i}); updateVGM(); saveToStorage();"></td>` : ""}
-	                    ${fixedHeadings[3] !== "" ? `<td><input type="text" id="ctn-color-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[4] !== "" ? `<td><input type="number" step="0.001" id="ctn-tare-${i}" style="min-width: 80px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
-	                    ${fixedHeadings[5] !== "" ? `<td><input type="number" id="ctn-bagcount-${i}" value="${bagVal}" style="min-width: 70px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
-	                    ${fixedHeadings[6] !== "" ? `<td><input type="time" lang="en-GB" id="ctn-com-${i}" style="min-width: 90px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[7] !== "" ? `<td><input type="time" lang="en-GB" id="ctn-comp-${i}" style="min-width: 90px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[8] !== "" ? `<td><input type="number" step="0.001" id="ctn-grossmt-${i}" style="min-width: 80px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[9] !== "" ? `<td><input type="number" step="0.001" id="ctn-taremt-${i}" style="min-width: 80px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[10] !== "" ? `<td><input type="text" id="ctn-seal-${i}" style="min-width: 110px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[11] !== "" ? `<td><input type="text" id="ctn-tallystr-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[12] !== "" ? `<td><input type="text" id="ctn-key-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
-	                    ${fixedHeadings[13] !== "" ? `<td><input type="number" step="0.001" id="ctn-addrem-${i}" style="min-width: 80px;" oninput="updateVGM(); calculateGrand(); saveToStorage();"></td>` : ""}
-	                    ${fixedHeadings[14] !== "" ? `<td><input type="text" id="ctn-sgs-seal-${i}" value="${currentData.inputs[`ctn-sgs-seal-${i}`] || '0.012'}" style="min-width: 90px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
-	                    ${customColumns.map((c, idx) => {
+		                ctnTableHTML += `<tr>
+		                    ${fixedHeadings[0] !== "" ? `<td style="text-align: center;">${i}</td>` : ""}
+		                    ${fixedHeadings[1] !== "" ? `<td><input type="text" id="ctn-truck-${i}" style="min-width: 110px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[2] !== "" ? `<td><input type="text" id="ctn-no-input-${i}" style="font-weight:bold; min-width: 140px;" oninput="updateCtnTitle(${i}); updateVGM(); saveToStorage();"></td>` : ""}
+		                    ${fixedHeadings[3] !== "" ? `<td><input type="text" id="ctn-color-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[4] !== "" ? `<td><input type="number" step="0.001" id="ctn-tare-${i}" style="min-width: 80px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
+		                    ${fixedHeadings[5] !== "" ? `<td><input type="number" id="ctn-bagcount-${i}" value="${bagVal}" style="min-width: 70px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
+		                    ${fixedHeadings[6] !== "" ? `<td><input type="number" step="0.001" id="ctn-avg-gross-input-${i}" style="min-width: 80px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
+		                    ${fixedHeadings[7] !== "" ? `<td><input type="time" lang="en-GB" id="ctn-com-${i}" style="min-width: 90px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[8] !== "" ? `<td><input type="time" lang="en-GB" id="ctn-comp-${i}" style="min-width: 90px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[9] !== "" ? `<td><input type="number" step="0.001" id="ctn-grossmt-${i}" style="min-width: 80px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[10] !== "" ? `<td><input type="number" step="0.001" id="ctn-taremt-${i}" style="min-width: 80px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[11] !== "" ? `<td><input type="text" id="ctn-seal-${i}" style="min-width: 110px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[12] !== "" ? `<td><input type="text" id="ctn-tallystr-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[13] !== "" ? `<td><input type="text" id="ctn-key-${i}" style="min-width: 70px;" oninput="saveToStorage()"></td>` : ""}
+		                    ${fixedHeadings[14] !== "" ? `<td><input type="number" step="0.001" id="ctn-addrem-${i}" style="min-width: 80px;" oninput="updateVGM(); calculateGrand(); saveToStorage();"></td>` : ""}
+		                    ${fixedHeadings[15] !== "" ? `<td><input type="text" id="ctn-sgs-seal-${i}" value="${currentData.inputs[`ctn-sgs-seal-${i}`] || '0.012'}" style="min-width: 90px;" oninput="updateVGM(); saveToStorage();"></td>` : ""}
+		                    ${customColumns.map((c, idx) => {
 	                        let existing = currentData.inputs[`ctn-dyn-${i}-${idx}`];
 	                        let val = (existing !== undefined && existing !== null) ? existing : '';
 	                        return `<td><input type="text" id="ctn-dyn-${i}-${idx}" value="${val}" style="min-width: 90px;" oninput="updateVGM(); saveToStorage();"></td>`;
@@ -1868,6 +1887,7 @@
                             document.getElementById(`ctn-color-${i}`)?.value || '', 
                             document.getElementById(`ctn-tare-${i}`)?.value || '', 
                             document.getElementById(`ctn-bagcount-${i}`)?.value || '', 
+                            document.getElementById(`ctn-avg-gross-input-${i}`)?.value || '', 
                             document.getElementById(`ctn-com-${i}`)?.value || '', 
                             document.getElementById(`ctn-comp-${i}`)?.value || '', 
                             document.getElementById(`ctn-grossmt-${i}`)?.value || '', 

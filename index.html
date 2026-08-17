@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Combined SGS & SIR Web App</title>
-    <script src="capacitor.js"></script>
-    
     <!-- SGS App Dependencies -->
     <meta name="theme-color" content="#2C5E43">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -160,6 +158,16 @@
         .quick-paste-hero p { margin: 7px 0 0; color: rgba(255,255,255,0.84); font-size: 13px; line-height: 1.55; }
         .quick-paste-body { padding: 24px 30px 30px; }
         .quick-paste-card { background: #fff; border: 1px solid #dbe8df; border-radius: 14px; padding: 20px; box-shadow: 0 6px 18px rgba(24, 64, 43, 0.06); margin-bottom: 18px; }
+        .gem-guide-card { background: linear-gradient(135deg, #f7f1ff 0%, #fbf9ff 100%); border-color: #d9c8f5; }
+        .gem-guide-title { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; color: #532d91; font-size: 17px; }
+        .gem-guide-title span { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: #6f3cc3; color: #fff; }
+        .gem-guide-text { margin: 0 0 14px; color: #5f5a69; font-size: 13px; line-height: 1.6; }
+        .gem-open-link { display: inline-flex; align-items: center; gap: 7px; color: #fff; background: #6f3cc3; padding: 10px 13px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 800; box-shadow: 0 3px 0 #542b97; }
+        .gem-open-link:active { transform: translateY(2px); box-shadow: 0 1px 0 #542b97; }
+        .gem-prompt-row { display: flex; align-items: center; gap: 10px; margin-top: 15px; padding: 11px; border: 1px solid #e0d5f4; border-radius: 9px; background: #fff; }
+        .gem-prompt-row code { flex: 1; color: #3f2a63; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
+        .gem-copy-btn { flex: 0 0 auto; border: 0; border-radius: 7px; background: #2c5e43; color: #fff; padding: 9px 11px; cursor: pointer; font-size: 12px; font-weight: 800; }
+        .gem-copy-btn:active { transform: scale(.96); }
         .quick-paste-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px; }
         .quick-paste-toolbar-text { font-size: 13px; line-height: 1.45; color: #496255; }
         .quick-paste-toolbar-text b { color: #1a4c33; }
@@ -191,6 +199,8 @@
             .quick-paste-toolbar { align-items: flex-start; }
             .quick-import-btn { min-width: 0; padding: 10px 12px; }
             .quick-paste-toolbar-text { font-size: 12px; }
+            .gem-prompt-row { align-items: stretch; flex-direction: column; }
+            .gem-copy-btn { width: 100%; }
         }
 
     </style>
@@ -494,6 +504,15 @@
             </div>
 
             <div class="quick-paste-body">
+                <div class="quick-paste-card gem-guide-card">
+                    <h3 class="gem-guide-title"><span>✦</span>Gemini Gem နဲ့ Container Report Photo ဖတ်ရန်</h3>
+                    <p class="gem-guide-text">အောက်က Gem ကိုဖွင့်ပါ၊ Container Report Photo ကိုတင်ပါ၊ ပြီးလျှင် Prompt စာသားကို Copy ကူးပြီး Gemini chat ထဲမှာ Paste လုပ်ပါ။ ထွက်လာသော Quick Paste data ကို ဒီ Tab ရဲ့ Paste box ထဲသို့ ပြန်ကူးထည့်နိုင်ပါတယ်။</p>
+                    <a class="gem-open-link" href="https://gemini.google.com/gem/121zjKsSgbvJBFVyklSlKanCgY_yOoTrb?usp=sharing" target="_blank" rel="noopener noreferrer">↗ Open Container Report Gem</a>
+                    <div class="gem-prompt-row">
+                        <code>Extract this report in Quick Paste format</code>
+                        <button type="button" class="gem-copy-btn" onclick="copyGemExtractionPrompt()">📋 Copy Prompt</button>
+                    </div>
+                </div>
                 <div class="quick-paste-card">
                     <div class="quick-paste-toolbar">
                         <div class="quick-paste-toolbar-text"><b>Excel / CSV Import</b><br>Workbook ရှိ Container Stuffing၊ Report Details နှင့် Calibration Report Sheet များကို သက်ဆိုင်ရာနေရာသို့ ချိတ်ဆက်ပေးပါမည်။</div>
@@ -2804,6 +2823,10 @@
             }
         }
 
+        function copyGemExtractionPrompt() {
+            copyQuickPasteText('Extract this report in Quick Paste format', '✅ Prompt copied. Gemini Gem ထဲမှာ Paste လုပ်ပါ။');
+        }
+
         function fallbackCopyQuickPaste(text, successMessage) {
             const helper = document.createElement('textarea');
             helper.value = text;
@@ -2962,6 +2985,58 @@
             reader.readAsArrayBuffer(file);
         }
 
+        const QUICK_PASTE_META_FIELDS = {
+            jobRef: ['job ref', 'job no', 'job order no'],
+            shipper: ['shipper'],
+            buyer: ['buyer'],
+            commodity: ['commodity'],
+            quantity: ['quantity'],
+            packing: ['packing'],
+            placeInsp: ['place of inspection', 'inspection place'],
+            vessel: ['vessel'],
+            destination: ['destination'],
+            marking: ['marking', 'marke', 'marks'],
+            inspector: ["inspector's name", 'inspector name', 'inspector'],
+            departureTime: ['departure from the office to loading point time', 'departure time'],
+            departureDate: ['departure date'],
+            arrivalTime: ['arrival time'],
+            arrivalDate: ['arrival date']
+        };
+
+        function quickPasteEscapeRegExp(value) {
+            return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function quickPasteExtractMetaLine(line) {
+            const source = String(line || '').trim();
+            if (!source) return null;
+            const normalised = normaliseQuickPasteHeader(source);
+            for (const [field, aliases] of Object.entries(QUICK_PASTE_META_FIELDS)) {
+                const alias = aliases.slice().sort((a, b) => b.length - a.length).find(candidate => {
+                    const key = normaliseQuickPasteHeader(candidate);
+                    return normalised === key || normalised.startsWith(`${key} `);
+                });
+                if (!alias) continue;
+                const aliasPattern = quickPasteEscapeRegExp(alias).replace(/\s+/g, '\\s*');
+                const valuePattern = new RegExp(`^\\s*${aliasPattern}\\s*(?::|=|\\t|-)?\\s*`, 'i');
+                const value = source.replace(valuePattern, '').trim();
+                if (value && normaliseQuickPasteHeader(value) !== normaliseQuickPasteHeader(alias)) {
+                    return { field, value };
+                }
+            }
+            return null;
+        }
+
+        function normaliseQuickPasteDate(value) {
+            const source = String(value || '').trim();
+            if (!source) return '';
+            const match = source.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
+            if (!match) return source;
+            let year = match[3];
+            if (year.length === 2) year = `20${year}`;
+            return `${year.padStart(4, '0')}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+        }
+
         function parseQuickPasteData() {
             const rawText = document.getElementById('quickPasteInput').value.replace(/\r/g, '').trim();
             const status = document.getElementById('quickPasteStatus');
@@ -2972,8 +3047,29 @@
             }
 
             const rawLines = rawText.split('\n').filter(line => line.trim() !== '');
-            const delimiter = rawLines[0].includes('\t') ? '\t' : ',';
-            const rows = rawLines.map(line => splitQuickPasteLine(line, delimiter));
+            const tableLines = [];
+            quickPasteImportedMeta = {};
+            rawLines.forEach(line => {
+                const metaLine = quickPasteExtractMetaLine(line);
+                if (metaLine) {
+                    quickPasteImportedMeta[metaLine.field] = metaLine.value;
+                    return;
+                }
+                // Ignore descriptive/preamble lines that are not table rows.
+                if (line.includes('\t') || line.includes(',') || /container|ctn|bags|gross|tare|seal|commence|complete/i.test(line)) {
+                    tableLines.push(line);
+                }
+            });
+
+            if (!tableLines.length) {
+                status.style.color = '#e74c3c';
+                status.textContent = '⚠️ Container Data မတွေ့ပါ။ General Information သာရှိနေပါသည်။';
+                return;
+            }
+
+            const sampleLine = tableLines.find(line => line.includes('\t') || line.includes(',')) || tableLines[0];
+            const delimiter = sampleLine.includes('\t') ? '\t' : ',';
+            const rows = tableLines.map(line => splitQuickPasteLine(line, delimiter));
             const fieldsInFirstRow = rows[0].map(getQuickPasteField);
             const hasHeader = fieldsInFirstRow.filter(Boolean).length >= 2;
             const defaultFields = ['ctn', 'bags', 'gross', 'tare', 'aveGross', 'commenced', 'completed', 'seal'];
@@ -2990,21 +3086,22 @@
                 row.completed = normaliseQuickPasteTime(row.completed);
                 row.ctn = row.ctn.replace(/\s/g, '').toUpperCase();
                 return row;
-            }).filter(row => Object.values(row).some(value => value !== ''));
+            }).filter(row => row.ctn || Object.values(row).some(value => value !== ''));
 
-            if (quickPasteRows.length === 0) {
+            if (quickPasteRows.length === 0 || !quickPasteRows.some(row => row.ctn)) {
                 status.style.color = '#e74c3c';
-                status.textContent = '⚠️ ဖတ်ယူနိုင်သော Data မရှိပါ။ Header format ကို စစ်ဆေးပြီး ပြန် Paste လုပ်ပါ။';
+                status.textContent = '⚠️ Container Number ပါသော Data မတွေ့ပါ။ Header format ကို စစ်ဆေးပြီး ပြန် Paste လုပ်ပါ။';
                 return;
             }
 
-            if (quickPasteRows.length > 30) {
-                quickPasteRows = quickPasteRows.slice(0, 30);
+            quickPasteRows = quickPasteRows.filter(row => row.ctn).slice(0, 30);
+            const metaNotice = Object.keys(quickPasteImportedMeta).length ? ' General Information ပါ ဖတ်ပြီးပါပြီ။' : '';
+            if (quickPasteRows.length >= 30) {
                 status.style.color = '#e67e22';
-                status.textContent = '⚠️ ပထမဆုံး 30 Rows ကိုသာ Preview ပြထားပါသည်။';
+                status.textContent = `⚠️ ပထမဆုံး 30 Rows ကိုသာ Preview ပြထားပါသည်။${metaNotice}`;
             } else {
                 status.style.color = '#28a745';
-                status.textContent = `✅ ${quickPasteRows.length} Container Row(s) ကို ဖတ်ယူပြီးပါပြီ။ Preview တွင် စစ်ဆေးပါ။`;
+                status.textContent = `✅ ${quickPasteRows.length} Container Row(s) ကို ဖတ်ယူပြီးပါပြီ။${metaNotice} Preview တွင် စစ်ဆေးပါ။`;
             }
             renderQuickPastePreview();
         }
@@ -3132,17 +3229,21 @@
                     if (key && value) values[key] = value;
                 });
             }
-            matrix.slice(1).forEach(row => {
-                const key = quickPasteNormaliseKey(row[0]);
-                const value = String(row[1] || '').trim();
-                if (key && value && !values[key]) values[key] = value;
+            // Support label/value report layouts where a label is in any column and its value
+            // appears several columns to the right (for example, "Job Ref : ... 2106858").
+            matrix.forEach(row => {
+                row.forEach((cell, index) => {
+                    const key = quickPasteNormaliseKey(cell);
+                    const value = row.slice(index + 1).map(item => String(item || '').trim()).find(Boolean);
+                    if (key && value && !values[key]) values[key] = value;
+                });
             });
             return values;
         }
 
         function quickPasteReadReportMeta(workbook) {
-            // Some reports use “Report Details”; newer exports use “Container Stuffing Report”.
-            const report = quickPasteReadKeyValueSheet(workbook, ['report details', 'container stuffing report']);
+            // Supported layouts include Report Details, Container Stuffing Report, and STUFFING REPORT.
+            const report = quickPasteReadKeyValueSheet(workbook, ['report details', 'container stuffing report', 'stuffing report']);
             const calibration = quickPasteReadKeyValueSheet(workbook, 'calibration report');
             return {
                 jobRef: report['job ref'] || '',
@@ -3222,6 +3323,11 @@
             setValue('place_insp', meta.placeInsp);
             setValue('vessel', meta.vessel);
             setValue('destination', meta.destination);
+            setValue('inspector', meta.inspector);
+            setValue('dep_time', meta.departureTime);
+            setValue('arr_time', meta.arrivalTime);
+            setValue('dep_date', normaliseQuickPasteDate(meta.departureDate));
+            setValue('arr_date', normaliseQuickPasteDate(meta.arrivalDate));
             setValue('test_weight_no', meta.testWeightNo);
             const testWeight = document.getElementById('test_weight');
             if (testWeight && meta.testWeight && [...testWeight.options].some(option => option.value === meta.testWeight)) {

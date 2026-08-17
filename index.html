@@ -151,6 +151,48 @@
         .btn-sync:hover { background-color: #218838; }
         .btn-sync:active { transform: scale(0.95); }
 
+        /* === Quick Paste Visual Refresh === */
+        .quick-paste-shell { max-width: 1060px; padding: 0; overflow: hidden; background: #f7faf8; border: 1px solid #dbe8df; box-shadow: 0 14px 38px rgba(27, 73, 50, 0.12); }
+        .quick-paste-hero { background: linear-gradient(135deg, #173e2a 0%, #2c6b4b 100%); color: #fff; padding: 28px 30px 24px; }
+        .quick-paste-title-row { display: flex; align-items: center; gap: 14px; }
+        .quick-paste-title-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,0.14); font-size: 22px; }
+        .quick-paste-hero h2 { color: #fff; border: 0; padding: 0; margin: 0; font-size: 24px; }
+        .quick-paste-hero p { margin: 7px 0 0; color: rgba(255,255,255,0.84); font-size: 13px; line-height: 1.55; }
+        .quick-paste-body { padding: 24px 30px 30px; }
+        .quick-paste-card { background: #fff; border: 1px solid #dbe8df; border-radius: 14px; padding: 20px; box-shadow: 0 6px 18px rgba(24, 64, 43, 0.06); margin-bottom: 18px; }
+        .quick-paste-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .quick-paste-toolbar-text { font-size: 13px; line-height: 1.45; color: #496255; }
+        .quick-paste-toolbar-text b { color: #1a4c33; }
+        .quick-import-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto; min-width: 185px; padding: 11px 16px; border: 0; border-radius: 9px; background: #6f3cc3; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 0 #542b97; transition: transform .15s, box-shadow .15s; }
+        .quick-import-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #542b97; }
+        .quick-icon-clear { width: 40px; height: 40px; border: 1px solid #f1c9c9; border-radius: 9px; background: #fff5f5; color: #c0392b; font-size: 17px; cursor: pointer; transition: background .15s, transform .15s; }
+        .quick-icon-clear:hover { background: #ffe6e6; }
+        .quick-icon-clear:active { transform: scale(.93); }
+        .quick-paste-label { color: #214c35; font-weight: 800; font-size: 14px; display: block; margin: 3px 0 8px; }
+        #quickPasteInput { width: 100%; min-height: 180px; border: 1px dashed #91b5a0; border-radius: 10px; padding: 14px; box-sizing: border-box; background: #fbfefc; color: #24362b; line-height: 1.55; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; resize: vertical; }
+        #quickPasteInput:focus { outline: none; border-style: solid; border-color: #2c6b4b; box-shadow: 0 0 0 3px rgba(44, 107, 75, 0.13); }
+        .quick-preview-btn { margin-top: 12px; width: auto; min-width: 190px; padding: 12px 18px; border-radius: 9px; background: #214f36; font-size: 14px; box-shadow: 0 4px 0 #163827; }
+        .quick-preview-btn:hover { background: #173e2a; }
+        #quickPasteStatus { min-height: 20px; padding-top: 11px; font-size: 13px; }
+        .quick-preview-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px; }
+        .quick-preview-head h3 { margin: 0; border: 0; padding: 0; color: #1d4d35; font-size: 18px; }
+        .quick-preview-head p { margin: 4px 0 0; color: #64776b; font-size: 12px; }
+        .quick-add-row { width: auto; padding: 9px 12px; border-radius: 8px; font-weight: 700; }
+        #quickPastePreviewCard .ctn-table th { background: #e6f2e9; color: #1d4d35; border-color: #c8dfce; }
+        #quickPastePreviewCard .ctn-table td { border-color: #d5e4d8; }
+        #quickPastePreviewCard .ctn-table tr:nth-child(even) td { background: #fbfefc; }
+        .quick-sync-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+        .quick-sync-actions .btn-main { flex: 1; min-width: 220px; width: auto; padding: 13px 16px; border-radius: 9px; font-size: 14px; }
+        @media (max-width: 640px) {
+            #master-nav { gap: 5px; padding: 8px 5px; }
+            .nav-btn { padding: 8px 8px; font-size: 11px; }
+            .quick-paste-body { padding: 16px; }
+            .quick-paste-hero { padding: 20px 18px; }
+            .quick-paste-toolbar { align-items: flex-start; }
+            .quick-import-btn { min-width: 0; padding: 10px 12px; }
+            .quick-paste-toolbar-text { font-size: 12px; }
+        }
+
     </style>
 </head>
 <body>
@@ -159,6 +201,7 @@
     <div id="master-nav">
         <button id="nav-sgs" class="nav-btn active" onclick="switchApp('sgs')">📝 SGS Surveyor Notes</button>
         <button id="nav-sir" class="nav-btn" onclick="switchApp('sir')">🚀 SIR Template Generator</button>
+        <button id="nav-quick-paste" class="nav-btn" onclick="switchApp('quick-paste')">⚡ Quick Paste</button>
     </div>
 
     <!-- ========================================== -->
@@ -435,6 +478,58 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- APP 3: QUICK PASTE                          -->
+    <!-- ========================================== -->
+    <div id="quick-paste-app" class="app-wrapper" style="display:none;">
+        <div class="sir-container quick-paste-shell">
+            <div class="quick-paste-hero">
+                <div class="quick-paste-title-row">
+                    <div class="quick-paste-title-icon">⚡</div>
+                    <div>
+                        <h2>Quick Paste</h2>
+                        <p>Container Data ကို Paste လုပ်ခြင်း သို့မဟုတ် Excel/CSV မှ Import လုပ်ခြင်းဖြင့် SIR Template နှင့် Surveyor Notes သို့ မြန်မြန် Sync လုပ်ပါ။</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-paste-body">
+                <div class="quick-paste-card">
+                    <div class="quick-paste-toolbar">
+                        <div class="quick-paste-toolbar-text"><b>Excel / CSV Import</b><br>Workbook ရှိ Container Stuffing၊ Report Details နှင့် Calibration Report Sheet များကို သက်ဆိုင်ရာနေရာသို့ ချိတ်ဆက်ပေးပါမည်။</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="file" id="quickPasteExcelInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="importQuickPasteExcel(event)">
+                            <button type="button" class="quick-import-btn" onclick="document.getElementById('quickPasteExcelInput').click()">📥 Import Excel File</button>
+                            <button type="button" class="quick-icon-clear" onclick="clearQuickPaste()" aria-label="Clear Quick Paste data" title="Clear">🗑️</button>
+                        </div>
+                    </div>
+                    <label for="quickPasteInput" class="quick-paste-label">Container Data ကို ဒီနေရာတွင် Paste လုပ်ပါ</label>
+                    <textarea id="quickPasteInput" rows="10" placeholder="Container No&#9;Bags&#9;Gross MT&#9;Tare MT&#9;Ave Gross Wt&#9;Commenced&#9;Completed&#9;Seal No&#10;TRHU1250528&#9;500&#9;25.050&#9;0.050&#9;50.100&#9;08:30&#9;09:10&#9;439291"></textarea>
+                    <button type="button" class="btn-main quick-preview-btn" onclick="parseQuickPasteData()">Paste &amp; Preview</button>
+                    <div id="quickPasteStatus"></div>
+                </div>
+
+                <div id="quickPastePreviewCard" class="quick-paste-card" style="display:none; overflow-x:auto;">
+                    <div class="quick-preview-head">
+                        <div>
+                            <h3>Preview &amp; Edit</h3>
+                            <p>Sync မလုပ်ခင် Row/Column data များကို တိုက်ရိုက်ပြင်ဆင်နိုင်ပါသည်။</p>
+                        </div>
+                        <button type="button" class="btn-small quick-add-row" style="background:#28a745;" onclick="addQuickPasteRow()">➕ Add Row</button>
+                    </div>
+                <table class="ctn-table" style="min-width:740px;">
+                    <thead><tr><th>No.</th><th>Container No</th><th>Bags</th><th>Gross MT</th><th>Tare MT</th><th>Ave Gross Wt</th><th>Commenced</th><th>Completed</th><th>Seal No</th><th>🗑️</th></tr></thead>
+                    <tbody id="quickPastePreviewBody"></tbody>
+                </table>
+                    <div class="quick-sync-actions">
+                        <button type="button" class="btn-main" style="background:#3498db;" onclick="fillQuickPasteToSIR(false)">🚀 Fill to SIR Template</button>
+                        <button type="button" class="btn-main" style="background:#2C5E43;" onclick="fillQuickPasteToSIR(true)">📝 Fill &amp; Open Surveyor Notes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- EXPORT MANAGER MODAL (Universal) -->
     <div class="modal-overlay" id="exportOptionsModal" style="z-index:999999;">
         <div class="modal-content" style="text-align:center;">
@@ -465,8 +560,10 @@
         function switchApp(app) {
             document.getElementById('sgs-app').style.display = app === 'sgs' ? 'block' : 'none';
             document.getElementById('sir-app').style.display = app === 'sir' ? 'block' : 'none';
+            document.getElementById('quick-paste-app').style.display = app === 'quick-paste' ? 'block' : 'none';
             document.getElementById('nav-sgs').classList.toggle('active', app === 'sgs');
             document.getElementById('nav-sir').classList.toggle('active', app === 'sir');
+            document.getElementById('nav-quick-paste').classList.toggle('active', app === 'quick-paste');
 
             if(app === 'sir') {
                 syncDataToSIR();
@@ -1485,9 +1582,12 @@
                 let ctnNo = document.getElementById(`ctn-no-input-${i}`)?.value || '-';
                 let ctnOverrides = vgmOverrides[i] || {};
                 
-                // Priority: SIR Sync (via Overrides) > SGS Input > SGS Calculated
+                // Priority: SIR Sync (via Overrides) > Container Details input > calculated tally value
                 let bags = ctnOverrides['Bags'] !== undefined ? (parseFloat(ctnOverrides['Bags']) || 0) : (parseFloat(document.getElementById(`ctn-bagcount-${i}`)?.value) || (parseFloat(document.getElementById(`ctn-bags-${i}`)?.innerText) || 0));
-                let avgWt = ctnOverrides['Ave; Gross Wt'] !== undefined ? (parseFloat(ctnOverrides['Ave; Gross Wt']) || 0) : (parseFloat(document.getElementById(`ctn-avg-gross-${i}`)?.innerText) || 0);
+                let avgGrossInput = document.getElementById(`ctn-avg-gross-input-${i}`)?.value;
+                let avgWt = ctnOverrides['Ave; Gross Wt'] !== undefined
+                    ? (parseFloat(ctnOverrides['Ave; Gross Wt']) || 0)
+                    : (parseFloat(avgGrossInput) || (parseFloat(document.getElementById(`ctn-avg-gross-${i}`)?.innerText) || 0));
                 let cargoWt = truncWt(bags * avgWt);
                 
                 let addsSum = 0;
@@ -2198,14 +2298,16 @@
                     let vData = [["VGM SUMMARY"], [], ["Sr.", "Container Number", "Number of Bags", "Per bag Weight", "Total Cargo Weight", "SGS Seal", ...customColumns, "Additional Kgs", "Container Tare", "Total Weight (kgs)"]];
                     for(let i=1; i<=noOfCtn; i++) {
                         let ctnNo = document.getElementById(`ctn-no-input-${i}`)?.value || '-';
-                        let bags = document.getElementById(`ctn-bagcount-${i}`)?.value || document.getElementById(`ctn-bags-${i}`)?.textContent || '0';
-                        let avgGross = document.getElementById(`ctn-avg-gross-${i}`)?.textContent || '0.000';
+                        let ctnOverrides = vgmOverrides[i] || {};
+                        let bags = ctnOverrides['Bags'] !== undefined ? ctnOverrides['Bags'] : (document.getElementById(`ctn-bagcount-${i}`)?.value || document.getElementById(`ctn-bags-${i}`)?.textContent || '0');
+                        let avgGross = ctnOverrides['Ave; Gross Wt'] !== undefined
+                            ? ctnOverrides['Ave; Gross Wt']
+                            : (document.getElementById(`ctn-avg-gross-input-${i}`)?.value || document.getElementById(`ctn-avg-gross-${i}`)?.textContent || '0.000');
                         
                         let cargoWtVal = (parseFloat(bags) || 0) * (parseFloat(avgGross) || 0);
                         let cargoWtStr = formatWt(cargoWtVal);
                         let r = [i, ctnNo, bags, avgGross, cargoWtStr];
                         
-                        let ctnOverrides = vgmOverrides[i] || {};
                         let additionsSum = 0;
 
                         customColumns.forEach((colName, idx) => {
@@ -2676,6 +2778,500 @@
                 showExportModal(blob, customName, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "SIR Excel Report");
 
             } catch (error) { console.error("Error in generating excel: ", error); alert("ဖိုင်ထုတ်လုပ်ရာတွင် အမှားအယွင်းရှိနေပါသည်။ ဖိုင်ဟောင်းငြိနေပါက အနီရောင်ခလုတ်ဖြင့် အရင်ဖျက်ပါ။ (Error: " + error.message + ")"); }
+        }
+
+        // ===============================================
+        // QUICK PASTE — BATCH CONTAINER ENTRY
+        // ===============================================
+        let quickPasteRows = [];
+        let quickPasteImportedMeta = {};
+
+        const QUICK_PASTE_TEMPLATE = [
+            'Container No\tBags\tGross MT\tTare MT\tAve Gross Wt\tCommenced\tCompleted\tSeal No',
+            'TRHU1250528\t500\t25.050\t0.050\t50.100\t08:30\t09:10\t439291',
+            'TRHU1288204\t500\t25.050\t0.050\t50.100\t08:30\t09:20\t439292'
+        ].join('\n');
+
+        function copyQuickPasteTemplate() {
+            copyQuickPasteText(QUICK_PASTE_TEMPLATE, '✅ Paste Template ကို Copy ကူးပြီးပါပြီ။');
+        }
+
+        function copyQuickPasteText(text, successMessage) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => alert(successMessage)).catch(() => fallbackCopyQuickPaste(text, successMessage));
+            } else {
+                fallbackCopyQuickPaste(text, successMessage);
+            }
+        }
+
+        function fallbackCopyQuickPaste(text, successMessage) {
+            const helper = document.createElement('textarea');
+            helper.value = text;
+            helper.style.position = 'fixed';
+            helper.style.opacity = '0';
+            document.body.appendChild(helper);
+            helper.select();
+            document.execCommand('copy');
+            helper.remove();
+            alert(successMessage);
+        }
+
+        function loadQuickPasteSample() {
+            document.getElementById('quickPasteInput').value = QUICK_PASTE_TEMPLATE;
+            parseQuickPasteData();
+        }
+
+        function clearQuickPaste() {
+            if (!confirm('Quick Paste data ကို အားလုံးဖျက်မှာ သေချာပါသလား?')) return;
+            quickPasteRows = [];
+            quickPasteImportedMeta = {};
+            document.getElementById('quickPasteInput').value = '';
+            document.getElementById('quickPastePreviewBody').innerHTML = '';
+            document.getElementById('quickPastePreviewCard').style.display = 'none';
+            document.getElementById('quickPasteStatus').textContent = '';
+        }
+
+        function splitQuickPasteLine(line, delimiter) {
+            if (delimiter === '\t') return line.split('\t').map(value => value.trim());
+            const values = [];
+            let value = '';
+            let quoted = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    if (quoted && line[i + 1] === '"') { value += '"'; i++; }
+                    else quoted = !quoted;
+                } else if (char === delimiter && !quoted) {
+                    values.push(value.trim());
+                    value = '';
+                } else value += char;
+            }
+            values.push(value.trim());
+            return values;
+        }
+
+        function normaliseQuickPasteHeader(value) {
+            return String(value || '').toLowerCase().replace(/[._;:()-]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function getQuickPasteField(header) {
+            const h = normaliseQuickPasteHeader(header);
+            // "Container Seal Number" also contains Container/Number, so test Seal first.
+            if (/seal/.test(h)) return 'seal';
+            if (/average|avg|ave/.test(h) && /(gross|weight|wt)/.test(h)) return 'aveGross';
+            if (/gross/.test(h) && /(mt|metric|weight|wt)/.test(h)) return 'gross';
+            if (/tare/.test(h) && /(mt|metric|weight|wt)/.test(h)) return 'tare';
+            if (/container|ctn/.test(h) && /(no|number|#)/.test(h)) return 'ctn';
+            // A title exactly named "Container" is ambiguous; do not map it to Container No.
+            if (/bag/.test(h)) return 'bags';
+            if (/commence|commenced|start/.test(h)) return 'commenced';
+            if (/complete|completed|finish|end/.test(h)) return 'completed';
+            return null;
+        }
+
+        function normaliseQuickPasteTime(value) {
+            let time = String(value || '').trim().replace(/\./g, ':').replace(/\s*(hrs?|am|pm)\s*$/i, '');
+            if (!time) return '';
+            if (/^\d{3,4}$/.test(time)) {
+                time = time.length === 3 ? `0${time[0]}:${time.slice(1)}` : `${time.slice(0, 2)}:${time.slice(2)}`;
+            }
+            const match = time.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
+            if (!match) return time;
+            const hours = String(Math.min(23, parseInt(match[1], 10) || 0)).padStart(2, '0');
+            const minutes = String(Math.min(59, parseInt(match[2] || '0', 10) || 0)).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        function importQuickPasteExcel(event) {
+            const file = event.target.files && event.target.files[0];
+            const status = document.getElementById('quickPasteStatus');
+            if (!file) return;
+            if (typeof XLSX === 'undefined') {
+                status.style.color = '#e74c3c';
+                status.textContent = '❌ Excel library မရရှိသေးပါ။ Internet connection ကို စစ်ဆေးပြီး App ကိုပြန်ဖွင့်ပါ။';
+                return;
+            }
+
+            status.style.color = '#3498db';
+            status.textContent = `⏳ ${file.name} ကို ဖတ်ယူနေပါသည်...`;
+            const reader = new FileReader();
+            reader.onload = function(loadEvent) {
+                try {
+                    const workbook = XLSX.read(loadEvent.target.result, { type: 'array', cellDates: false });
+                    const firstSheetName = workbook.SheetNames[0];
+                    if (!firstSheetName) throw new Error('Worksheet မရှိပါ');
+                    const sheet = workbook.Sheets[firstSheetName];
+                    const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, blankrows: false })
+                        .map(row => row.map(cell => String(cell === undefined || cell === null ? '' : cell).trim()))
+                        .filter(row => row.some(cell => cell !== ''));
+                    if (!matrix.length) throw new Error('Data မရှိပါ');
+
+                    // The converted Excel file may have a title above its header; scan the first 25 rows.
+                    let headerIndex = -1;
+                    let columnMap = [];
+                    for (let rowIndex = 0; rowIndex < Math.min(25, matrix.length); rowIndex++) {
+                        const candidateMap = matrix[rowIndex].map(getQuickPasteField);
+                        if (candidateMap.filter(Boolean).length >= 2) {
+                            headerIndex = rowIndex;
+                            columnMap = candidateMap;
+                            break;
+                        }
+                    }
+                    if (headerIndex === -1) {
+                        headerIndex = -1;
+                        columnMap = ['ctn', 'bags', 'aveGross', 'commenced', 'completed', 'seal'];
+                    }
+
+                    const dataRows = matrix.slice(headerIndex + 1);
+                    quickPasteRows = dataRows.map(cells => {
+                        const row = { ctn: '', bags: '', gross: '', tare: '', aveGross: '', commenced: '', completed: '', seal: '' };
+                        cells.forEach((value, index) => {
+                            const field = columnMap[index];
+                            if (field) row[field] = value;
+                        });
+                        row.ctn = row.ctn.replace(/\s/g, '').toUpperCase();
+                        row.commenced = normaliseQuickPasteTime(row.commenced);
+                        row.completed = normaliseQuickPasteTime(row.completed);
+                        return row;
+                    }).filter(row => Object.values(row).some(value => value !== ''));
+
+                    if (!quickPasteRows.length) throw new Error('Container columns ကို ဖတ်ယူမရပါ');
+                    if (quickPasteRows.length > 30) quickPasteRows = quickPasteRows.slice(0, 30);
+
+                    // Leave a standardised, reusable text version in the Paste box.
+                    document.getElementById('quickPasteInput').value = [
+                        'Container No\tBags\tAve Gross Wt\tCommenced\tCompleted\tSeal No',
+                        ...quickPasteRows.map(row => [row.ctn, row.bags, row.aveGross, row.commenced, row.completed, row.seal].join('\t'))
+                    ].join('\n');
+                    renderQuickPastePreview();
+                    status.style.color = '#28a745';
+                    status.textContent = `✅ ${quickPasteRows.length} Container Row(s) ကို '${firstSheetName}' Worksheet မှ Import လုပ်ပြီးပါပြီ။ Preview တွင် စစ်ဆေးပြီး Sync လုပ်ပါ။`;
+                } catch (error) {
+                    console.error('Quick Paste Excel Import Error:', error);
+                    status.style.color = '#e74c3c';
+                    status.textContent = `❌ Excel Import မအောင်မြင်ပါ: ${error.message}`;
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.onerror = function() {
+                status.style.color = '#e74c3c';
+                status.textContent = '❌ File ကိုဖတ်မရပါ။ Excel/CSV file ကို ပြန်ရွေးပေးပါ။';
+                event.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parseQuickPasteData() {
+            const rawText = document.getElementById('quickPasteInput').value.replace(/\r/g, '').trim();
+            const status = document.getElementById('quickPasteStatus');
+            if (!rawText) {
+                status.style.color = '#e74c3c';
+                status.textContent = '⚠️ Paste လုပ်မည့် Data မရှိသေးပါ။';
+                return;
+            }
+
+            const rawLines = rawText.split('\n').filter(line => line.trim() !== '');
+            const delimiter = rawLines[0].includes('\t') ? '\t' : ',';
+            const rows = rawLines.map(line => splitQuickPasteLine(line, delimiter));
+            const fieldsInFirstRow = rows[0].map(getQuickPasteField);
+            const hasHeader = fieldsInFirstRow.filter(Boolean).length >= 2;
+            const defaultFields = ['ctn', 'bags', 'gross', 'tare', 'aveGross', 'commenced', 'completed', 'seal'];
+            const columnMap = hasHeader ? fieldsInFirstRow : defaultFields;
+            const dataRows = hasHeader ? rows.slice(1) : rows;
+
+            quickPasteRows = dataRows.map(cells => {
+                const row = { ctn: '', bags: '', gross: '', tare: '', aveGross: '', commenced: '', completed: '', seal: '' };
+                cells.forEach((value, index) => {
+                    const field = columnMap[index];
+                    if (field) row[field] = value.trim();
+                });
+                row.commenced = normaliseQuickPasteTime(row.commenced);
+                row.completed = normaliseQuickPasteTime(row.completed);
+                row.ctn = row.ctn.replace(/\s/g, '').toUpperCase();
+                return row;
+            }).filter(row => Object.values(row).some(value => value !== ''));
+
+            if (quickPasteRows.length === 0) {
+                status.style.color = '#e74c3c';
+                status.textContent = '⚠️ ဖတ်ယူနိုင်သော Data မရှိပါ။ Header format ကို စစ်ဆေးပြီး ပြန် Paste လုပ်ပါ။';
+                return;
+            }
+
+            if (quickPasteRows.length > 30) {
+                quickPasteRows = quickPasteRows.slice(0, 30);
+                status.style.color = '#e67e22';
+                status.textContent = '⚠️ ပထမဆုံး 30 Rows ကိုသာ Preview ပြထားပါသည်။';
+            } else {
+                status.style.color = '#28a745';
+                status.textContent = `✅ ${quickPasteRows.length} Container Row(s) ကို ဖတ်ယူပြီးပါပြီ။ Preview တွင် စစ်ဆေးပါ။`;
+            }
+            renderQuickPastePreview();
+        }
+
+        function escapeQuickPasteHtml(value) {
+            return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        function renderQuickPastePreview() {
+            const body = document.getElementById('quickPastePreviewBody');
+            body.innerHTML = quickPasteRows.map((row, index) => `
+                <tr>
+                    <td style="text-align:center; font-weight:bold;">${index + 1}</td>
+                    <td><input data-qp-row="${index}" data-qp-field="ctn" value="${escapeQuickPasteHtml(row.ctn)}" oninput="updateQuickPasteCell(this)"></td>
+                    <td><input data-qp-row="${index}" data-qp-field="bags" inputmode="numeric" value="${escapeQuickPasteHtml(row.bags)}" oninput="updateQuickPasteCell(this)"></td>
+                    <td><input data-qp-row="${index}" data-qp-field="gross" inputmode="decimal" value="${escapeQuickPasteHtml(row.gross)}" oninput="updateQuickPasteCell(this)"></td>
+                    <td><input data-qp-row="${index}" data-qp-field="tare" inputmode="decimal" value="${escapeQuickPasteHtml(row.tare)}" oninput="updateQuickPasteCell(this)"></td>
+                    <td><input data-qp-row="${index}" data-qp-field="aveGross" inputmode="decimal" value="${escapeQuickPasteHtml(row.aveGross)}" oninput="updateQuickPasteCell(this)"></td>
+                    <td><input type="time" data-qp-row="${index}" data-qp-field="commenced" value="${escapeQuickPasteHtml(row.commenced)}" oninput="updateQuickPasteCell(this)"></td>
+                    <td><input type="time" data-qp-row="${index}" data-qp-field="completed" value="${escapeQuickPasteHtml(row.completed)}" oninput="updateQuickPasteCell(this)"></td>
+                    <td><input data-qp-row="${index}" data-qp-field="seal" value="${escapeQuickPasteHtml(row.seal)}" oninput="updateQuickPasteCell(this)"></td>
+                    <td style="text-align:center;"><button type="button" class="btn-delete" style="width:28px; height:28px;" onclick="deleteQuickPasteRow(${index})">×</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('quickPastePreviewCard').style.display = quickPasteRows.length ? 'block' : 'none';
+        }
+
+        function updateQuickPasteCell(input) {
+            const rowIndex = parseInt(input.dataset.qpRow, 10);
+            const field = input.dataset.qpField;
+            if (!quickPasteRows[rowIndex] || !field) return;
+            quickPasteRows[rowIndex][field] = input.value;
+        }
+
+        function addQuickPasteRow() {
+            quickPasteRows.push({ ctn: '', bags: '', aveGross: '', commenced: '', completed: '', seal: '' });
+            renderQuickPastePreview();
+        }
+
+        function deleteQuickPasteRow(index) {
+            quickPasteRows.splice(index, 1);
+            renderQuickPastePreview();
+        }
+
+        function fillQuickPasteToSIR(openSurveyorNotes) {
+            const rows = quickPasteRows.filter(row => String(row.ctn || '').trim() !== '').slice(0, 30);
+            if (!rows.length) {
+                alert('⚠️ Container No. ပါသော Row အနည်းဆုံး တစ်ခု ထည့်ပေးပါ။');
+                return;
+            }
+
+            // Open SIR first because its normal tab action reads the prior Surveyor Notes values.
+            switchApp('sir');
+            applyQuickPasteImportedMeta();
+            const setColumn = (id, field) => { document.getElementById(id).value = rows.map(row => row[field] || '').join('\n'); };
+            setColumn('col_ctn', 'ctn');
+            setColumn('col_bags', 'bags');
+            setColumn('col_gross', 'gross');
+            setColumn('col_tare', 'tare');
+            setColumn('col_ave_gross', 'aveGross');
+            setColumn('col_commence', 'commenced');
+            setColumn('col_complete', 'completed');
+            setColumn('col_seal', 'seal');
+
+            const countSelect = document.getElementById('noOfCtn');
+            if (countSelect) {
+                countSelect.value = String(rows.length);
+                if (typeof generateDynamicContent === 'function') generateDynamicContent();
+            }
+            if (typeof syncDataFromSIR === 'function') syncDataFromSIR();
+            if (typeof autoPadTimeColumn === 'function') {
+                autoPadTimeColumn('col_commence');
+                autoPadTimeColumn('col_complete');
+            }
+
+            alert(`✅ ${rows.length} Container Row(s) ကို SIR Template သို့ ဖြည့်သွင်းပြီးပါပြီ။`);
+            if (openSurveyorNotes) switchApp('sgs');
+        }
+
+        // ===============================================
+        // MULTI-SHEET EXCEL IMPORT (SGS Container Report)
+        // ===============================================
+        function quickPasteEmptyRow() {
+            return { ctn: '', bags: '', gross: '', tare: '', aveGross: '', commenced: '', completed: '', seal: '' };
+        }
+
+        function quickPasteSheetMatrix(sheet) {
+            return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, blankrows: false })
+                .map(row => row.map(cell => String(cell === undefined || cell === null ? '' : cell).trim()))
+                .filter(row => row.some(cell => cell !== ''));
+        }
+
+        function quickPasteFindHeaderRow(matrix) {
+            let best = { index: -1, map: [], score: 0 };
+            matrix.slice(0, 25).forEach((row, index) => {
+                const map = row.map(getQuickPasteField);
+                const score = map.filter(Boolean).length;
+                if (score > best.score) best = { index, map, score };
+            });
+            return best;
+        }
+
+        function quickPasteNormaliseKey(value) {
+            return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function quickPasteFindSheetByName(workbook, nameParts) {
+            const parts = Array.isArray(nameParts) ? nameParts : [nameParts];
+            return workbook.SheetNames.find(name => {
+                const normalisedName = quickPasteNormaliseKey(name);
+                return parts.some(part => normalisedName.includes(quickPasteNormaliseKey(part)));
+            });
+        }
+
+        function quickPasteReadKeyValueSheet(workbook, nameParts) {
+            const sheetName = quickPasteFindSheetByName(workbook, nameParts);
+            if (!sheetName) return {};
+            const matrix = quickPasteSheetMatrix(workbook.Sheets[sheetName]);
+            const values = {};
+            if (matrix.length >= 2) {
+                // Support a horizontal header/value format as well as traditional key/value rows.
+                matrix[0].forEach((header, index) => {
+                    const key = quickPasteNormaliseKey(header);
+                    const value = String(matrix[1][index] || '').trim();
+                    if (key && value) values[key] = value;
+                });
+            }
+            matrix.slice(1).forEach(row => {
+                const key = quickPasteNormaliseKey(row[0]);
+                const value = String(row[1] || '').trim();
+                if (key && value && !values[key]) values[key] = value;
+            });
+            return values;
+        }
+
+        function quickPasteReadReportMeta(workbook) {
+            // Some reports use “Report Details”; newer exports use “Container Stuffing Report”.
+            const report = quickPasteReadKeyValueSheet(workbook, ['report details', 'container stuffing report']);
+            const calibration = quickPasteReadKeyValueSheet(workbook, 'calibration report');
+            return {
+                jobRef: report['job ref'] || '',
+                shipper: report['shipper'] || '',
+                buyer: report['buyer'] || '',
+                commodity: report['commodity'] || '',
+                quantity: report['quantity'] || '',
+                packing: report['packing'] || '',
+                placeInsp: report['place of inspection'] || '',
+                vessel: report['vessel'] || '',
+                destination: report['destination'] || '',
+                marking: report['marks'] || report['marking'] || report['marke'] || '',
+                testWeight: calibration['test weight'] || '',
+                testWeightNo: calibration['test weight no'] || calibration['kgs viss test weight no'] || ''
+            };
+        }
+
+        function quickPasteNumber(value) {
+            const number = parseFloat(String(value || '').replace(/,/g, ''));
+            return Number.isFinite(number) ? number : null;
+        }
+
+        function quickPasteReadContainerSheet(workbook) {
+            // Evaluate every sheet. A workbook may have a summary sheet named “Container Stuffing Report”
+            // while the actual container rows are stored in a separate “Container Details” sheet.
+            const candidates = workbook.SheetNames.map(name => {
+                const headerInfo = quickPasteFindHeaderRow(quickPasteSheetMatrix(workbook.Sheets[name]));
+                const normalisedName = quickPasteNormaliseKey(name);
+                const namePriority = normalisedName.includes('container details') ? 2 : (normalisedName.includes('container stuffing') ? 1 : 0);
+                return { name, headerInfo, namePriority };
+            }).filter(candidate => candidate.headerInfo.map.includes('ctn'));
+
+            candidates.sort((a, b) => (b.headerInfo.score - a.headerInfo.score) || (b.namePriority - a.namePriority));
+            const selected = candidates[0];
+            if (!selected || selected.headerInfo.score < 2) throw new Error('Container Number ပါသော Data Sheet သို့မဟုတ် Header Row ကို မတွေ့ပါ');
+
+            const sheetName = selected.name;
+            const headerInfo = selected.headerInfo;
+            const matrix = quickPasteSheetMatrix(workbook.Sheets[sheetName]);
+            const isLegacyContainerStuffing = quickPasteNormaliseKey(sheetName).includes('container stuffing')
+                && !headerInfo.map.includes('commenced') && !headerInfo.map.includes('completed');
+            // Legacy JPG-to-Excel reports use: No | Container Number | Condition |
+            // Container (Commenced) | Contents (Completed) | Bags | Gross MT | Tare MT | Seal.
+            const columnMap = isLegacyContainerStuffing
+                ? [null, 'ctn', null, 'commenced', 'completed', 'bags', 'gross', 'tare', 'seal']
+                : headerInfo.map;
+
+            const rows = matrix.slice(headerInfo.index + 1).map(cells => {
+                const row = quickPasteEmptyRow();
+                cells.forEach((value, index) => {
+                    const field = columnMap[index];
+                    if (field) row[field] = String(value || '').trim();
+                });
+                row.ctn = row.ctn.replace(/\s/g, '').toUpperCase();
+                row.commenced = normaliseQuickPasteTime(row.commenced);
+                row.completed = normaliseQuickPasteTime(row.completed);
+                // Average Gross Weight ကို Excel/Paste မှာ ပါလာသော value အတိုင်းသာ ထားမည်။
+                return row;
+            }).filter(row => row.ctn && !/^total$/i.test(row.ctn)).slice(0, 30);
+
+            if (!rows.length) throw new Error('Container Number ပါသော Row မတွေ့ပါ');
+            return { sheetName, rows };
+        }
+
+        function applyQuickPasteImportedMeta() {
+            const meta = quickPasteImportedMeta || {};
+            const setValue = (id, value) => {
+                const el = document.getElementById(id);
+                if (el && value) el.value = value;
+            };
+            setValue('job_ref', meta.jobRef);
+            setValue('shipper', meta.shipper);
+            setValue('buyer', meta.buyer);
+            setValue('commodity', meta.commodity);
+            setValue('quantity', meta.quantity);
+            setValue('packing', meta.packing);
+            setValue('place_insp', meta.placeInsp);
+            setValue('vessel', meta.vessel);
+            setValue('destination', meta.destination);
+            setValue('test_weight_no', meta.testWeightNo);
+            const testWeight = document.getElementById('test_weight');
+            if (testWeight && meta.testWeight && [...testWeight.options].some(option => option.value === meta.testWeight)) {
+                testWeight.value = meta.testWeight;
+            }
+            setValue('marking-input', meta.marking);
+        }
+
+        // This declaration intentionally supersedes the earlier generic one-sheet importer.
+        // It handles the exact JPGtoExcel multi-sheet workbook supplied by the user.
+        function importQuickPasteExcel(event) {
+            const file = event.target.files && event.target.files[0];
+            const status = document.getElementById('quickPasteStatus');
+            if (!file) return;
+            if (typeof XLSX === 'undefined') {
+                status.style.color = '#e74c3c';
+                status.textContent = '❌ Excel library မရရှိသေးပါ။ Internet connection ကို စစ်ဆေးပြီး App ကိုပြန်ဖွင့်ပါ။';
+                return;
+            }
+            status.style.color = '#3498db';
+            status.textContent = `⏳ ${file.name} ၏ Sheet များကို ဖတ်ယူနေပါသည်...`;
+            const reader = new FileReader();
+            reader.onload = function(loadEvent) {
+                try {
+                    const workbook = XLSX.read(loadEvent.target.result, { type: 'array', cellDates: false });
+                    const imported = quickPasteReadContainerSheet(workbook);
+                    quickPasteRows = imported.rows;
+                    quickPasteImportedMeta = quickPasteReadReportMeta(workbook);
+                    document.getElementById('quickPasteInput').value = [
+                        'Container No\tBags\tGross MT\tTare MT\tAve Gross Wt\tCommenced\tCompleted\tSeal No',
+                        ...quickPasteRows.map(row => [row.ctn, row.bags, row.gross, row.tare, row.aveGross, row.commenced, row.completed, row.seal].join('\t'))
+                    ].join('\n');
+                    renderQuickPastePreview();
+                    const metaCount = Object.values(quickPasteImportedMeta).filter(Boolean).length;
+                    status.style.color = '#28a745';
+                    status.textContent = `✅ '${imported.sheetName}' Sheet မှ ${quickPasteRows.length} Container Row(s) နှင့် အခြား Sheet များမှ General Data ${metaCount} ခုကို Import လုပ်ပြီးပါပြီ။ Preview စစ်ပြီး Sync လုပ်ပါ။`;
+                } catch (error) {
+                    console.error('Quick Paste Multi-Sheet Import Error:', error);
+                    status.style.color = '#e74c3c';
+                    status.textContent = `❌ Excel Import မအောင်မြင်ပါ: ${error.message}`;
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.onerror = function() {
+                status.style.color = '#e74c3c';
+                status.textContent = '❌ File ကိုဖတ်မရပါ။ Excel/CSV file ကို ပြန်ရွေးပေးပါ။';
+                event.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
         }
     </script>
 </body>

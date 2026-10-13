@@ -1418,6 +1418,7 @@
                     else if(el.id === 'tareWt') el.value = "0.120";
                     else if(el.id === 'netWt') el.value = "50.000";
                     else if(el.id === 'decimal-setup') el.value = "3";
+                    else if(el.id === 'sizeOfContainer') el.value = "20'";
                     else el.value = "";
                     el.setAttribute('value', el.value);
                 }
@@ -1433,13 +1434,8 @@
             const vgmAreaReset = document.getElementById('vgmDetailsArea');
             if (vgmAreaReset) vgmAreaReset.innerHTML = '';
 
-            // Reset SIR Template Other Packages to the clean new-job defaults.
-            // Keep the package names, but always start their quantity/data fields blank.
-            sirPackages = [
-                { id: 1, name: 'Paper', val: '' },
-                { id: 2, name: 'Desiccant Powder', val: '' },
-                { id: 3, name: 'Empty Bags', val: '' }
-            ];
+            // Reset SIR Template Other Packages: start with no items; use "Add Item" when needed.
+            sirPackages = [];
             localStorage.setItem('sir_packages', JSON.stringify(sirPackages));
             renderSirPackages();
 
@@ -3801,11 +3797,7 @@
         // ===============================================
         // SIR TEMPLATE NEW FUNCTIONS
         // ===============================================
-        let sirPackages = safeParseJSON(localStorage.getItem('sir_packages'), [
-            { id: 1, name: 'Paper', val: '' },
-            { id: 2, name: 'Desiccant Powder', val: '' },
-            { id: 3, name: 'Empty Bags', val: '' }
-        ]);
+        let sirPackages = safeParseJSON(localStorage.getItem('sir_packages'), []);
 
         function renderSirPackages() {
             let container = document.getElementById('sir-packages-container');

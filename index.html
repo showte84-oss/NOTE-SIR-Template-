@@ -621,6 +621,9 @@
     <!-- ========================================== -->
     <script>
         let vgmOverrides = {}; // Global scope for sync consistency
+        // Set while a saved job is being loaded and the page is about to reload: the old form must not
+        // be written back over the job that was just loaded (pagehide/visibilitychange would do that).
+        let suppressAutoSave = false;
         const DEFAULT_FIXED_HEADINGS = ["No.", "Truck No", "CTN No.", "Colour", "CTN Tare", "Bags", "Ave; Gross Wt", "Commenced", "Completed", "Gross MT", "Tare MT", "Seal No", "Tally", "Key", "Additional", "SGS SEAL"];
         const DEFAULT_TALLY_TAB_COLUMNS = ["1","2","3","4","5","6","7","8","9","10"];
                 let tallyTabColumns = [...DEFAULT_TALLY_TAB_COLUMNS];
@@ -631,6 +634,7 @@
         // --- Master App Switcher & Auto Sync Logic ---
         const SIR_FORM_STATE_KEY = 'sir_generator_form_state_v1';
         function saveSIRFormState() {
+            if (suppressAutoSave) return;
             const root = document.getElementById('sir-app');
             if (!root) return;
             const values = {};
@@ -1126,6 +1130,7 @@
         }
 
         function saveToStorage() {
+            if (suppressAutoSave) return;
             let existingData;
             try {
                 existingData = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
@@ -1417,6 +1422,11 @@
                         localStorage.setItem('sir_packages', savedJobs[jobNo].otherPkgs);
                     }
                     
+                    // Start the SIR view fresh from the loaded Surveyor Notes data, and stop the old form
+                    // from being saved over it while the page reloads.
+                    try { localStorage.removeItem(SIR_FORM_STATE_KEY); } catch (e) {}
+                    suppressAutoSave = true;
+                    clearTimeout(cloudTimer);
                     location.reload(); 
                 }
             }

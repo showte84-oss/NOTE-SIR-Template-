@@ -415,6 +415,7 @@
                 <div style="border-top:1px dashed #bbb; margin-top:15px; padding-top:12px;">
                     <div class="form-group"><label>Firebase URL (Realtime Database)</label><input type="text" id="tg-firebase-url" placeholder="https://your-project-default-rtdb.firebaseio.com" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
                     <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px;"><input type="checkbox" id="tg-firebase-auto" style="width:auto;"> ဒီစက်မှ ရိုက်တာနဲ့ Cloud သို့ အလိုအလျောက် တင်မည် (Auto Upload)</label>
+                    <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px;"><input type="checkbox" id="tg-firebase-live" style="width:auto;"> တခြားစက်က ပြင်တာကို Load မလုပ်ဘဲ အလိုအလျောက် လက်ခံမည် (Live Update)</label>
                     <div style="font-size:11px; color:#777; margin-top:4px;">ဖုန်းကို ကြည့်ရုံသာ သုံးမယ်ဆိုရင် Auto Upload ကို ပိတ်ထားပါ။</div>
                     <button class="btn-small" style="margin-top:10px; width:100%; padding:8px; background:#3498db;" onclick="testFirebaseConnection()">🔌 Connection စမ်းမည်</button>
                     <div id="tg-firebase-test-result" style="font-size:12px; margin-top:6px; min-height:16px;"></div>
@@ -922,6 +923,14 @@
             return url;
         }
         function getFirebaseUrl() { return normaliseFirebaseUrl(localStorage.getItem('sgs_firebase_url')); }
+        const CLOUD_DEVICE_ID = (() => {
+            try {
+                let id = localStorage.getItem('sgs_device_id');
+                if (!id) { id = 'dev-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem('sgs_device_id', id); }
+                return id;
+            } catch (e) { return 'dev-' + Math.random().toString(36).slice(2, 10); }
+        })();
+        function isCloudLive() { return localStorage.getItem('sgs_cloud_live') !== '0'; }
         function cloudKey(jobNo) { return String(jobNo || '').trim().replace(/[.#$\[\]\/]/g, '-'); }
 
         try {
@@ -935,6 +944,8 @@
 
         // ---- Cloud status badge + auto upload (debounced) ----
         let cloudTimer = null;
+        let lastLocalEditAt = 0;
+        let cloudListenerRef = null, cloudListenerKey = '', pendingRemoteJob = null, pendingRemoteTimer = null;
         let cloudOnline = null;
         function setCloudStatus(state, detail) {
             const el = document.getElementById('cloud-status');
@@ -960,13 +971,16 @@
             if (!isCloudAuto()) { setCloudStatus('paused'); return; }
             setCloudStatus(cloudOnline === false ? 'offline' : 'idle');
         }
-        function scheduleCloudUpload() {
+        function scheduleCloudUpload(isTypedInput) {
             if (!isFirebaseReady || !database || !isCloudAuto()) return;
+            if (!isTypedInput && typeof applyingRemoteUntil !== 'undefined' && Date.now() < applyingRemoteUntil) return;
             const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
             if (!jobNo) return;
             setCloudStatus('pending');
+            lastLocalEditAt = Date.now();
+            try { localStorage.setItem('sgs_cloud_dirty_' + cloudKey(jobNo), String(lastLocalEditAt)); } catch (e) {}
             clearTimeout(cloudTimer);
-            cloudTimer = setTimeout(doCloudUpload, 3000);
+            cloudTimer = setTimeout(() => { cloudTimer = null; doCloudUpload(); }, 3000);
         }
         function doCloudUpload() {
             if (!isFirebaseReady || !database) return;
@@ -980,8 +994,14 @@
                 localStorage.setItem('sgs_saved_jobs', JSON.stringify(saved));
             } catch (e) {}
             setCloudStatus('uploading');
-            database.ref('sgs_jobs/' + cloudKey(jobNo)).set(jobData)
-                .then(() => { const t = new Date(); setCloudStatus('synced', `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`); })
+            const upKey = cloudKey(jobNo), sentAt = jobData.updatedAt;
+            database.ref('sgs_jobs/' + upKey).set(jobData)
+                .then(() => {
+                    try {
+                        localStorage.setItem('sgs_cloud_applied_' + upKey, String(sentAt));
+                        if (lastLocalEditAt <= sentAt) localStorage.removeItem('sgs_cloud_dirty_' + upKey);
+                    } catch (e) {}
+                    const t = new Date(); setCloudStatus('synced', `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`); })
                 .catch(err => { console.warn('Cloud upload failed:', err); setCloudStatus('error', '(' + (err && err.code ? err.code : 'upload') + ')'); });
         }
         // Only genuine user edits trigger an upload, never the page loading, so opening the app on
@@ -991,8 +1011,15 @@
             if (!t || !t.closest || !e.isTrusted) return;
             if (!t.closest('#sgs-app') && !t.closest('#sir-app')) return;
             if (t.id && (t.id.startsWith('tg-') || t.id === 'searchInput')) return;
-            scheduleCloudUpload();
+            scheduleCloudUpload(evt === 'input');
         }, true));
+        document.addEventListener('click', e => {
+            const t = e.target && e.target.closest ? e.target.closest('button, .btn-header-del') : null;
+            if (!t || !e.isTrusted) return;
+            if (!t.closest('#sgs-app') && !t.closest('#sir-app')) return;
+            if (t.classList.contains('tab-btn') || t.classList.contains('menu-item') || t.closest('.modal-overlay')) return;
+            scheduleCloudUpload();
+        }, true);
         window.addEventListener('online', () => { cloudOnline = true; scheduleCloudUpload(); refreshCloudStatus(); });
         window.addEventListener('offline', () => { cloudOnline = false; refreshCloudStatus(); });
         window.addEventListener('DOMContentLoaded', () => {
@@ -1001,6 +1028,79 @@
                 try { database.ref('.info/connected').on('value', snap => { cloudOnline = !!snap.val(); if (!cloudTimer) refreshCloudStatus(); }); } catch (e) {}
             }
         });
+
+
+        // ---- Live update: apply changes made on another device without pressing Load ----
+        let applyingRemoteUntil = 0;
+        function applyCloudJob(job) {
+            // Blur first and ignore any change/blur events caused by the re-render, so applying another
+            // device's update can never be mistaken for a local edit and bounce straight back.
+            applyingRemoteUntil = Date.now() + 1500;
+            try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+            const set = (k, v) => localStorage.setItem(k, v);
+            set('sgs_app_data_final', job.appData || '{}');
+            set('sgs_vgm_overrides', job.vgmData || '{}');
+            set('sgs_custom_cols', job.customCols || '[]');
+            if (job.fixedHeadings) set('sgs_fixed_headings', job.fixedHeadings);
+            if (job.tallyTabCols) set('sgs_tally_tab_cols', job.tallyTabCols);
+            set('sgs_tally_extra_rows', job.tallyExtraRows || '[]');
+            if (job.tallyMode) { set('sgs_tally_mode', job.tallyMode); tallyTabMode = job.tallyMode; }
+            if (job.sirPkgs) set('sir_packages', job.sirPkgs);
+            vgmOverrides = safeParseJSON(job.vgmData, {});
+            const cols = safeParseJSON(job.customCols, []);
+            customColumns = Array.isArray(cols) ? cols : [];
+            const heads = safeParseJSON(job.fixedHeadings, null);
+            if (Array.isArray(heads) && heads.length === fixedHeadings.length) fixedHeadings = heads;
+            const pk = safeParseJSON(job.sirPkgs, null);
+            if (Array.isArray(pk)) sirPackages = pk;
+            const y = window.scrollY;
+            loadFromStorage();
+            try { renderSirPackages(); } catch (e) {}
+            try { renderTallyTab(); } catch (e) {}
+            try { updateVGM(); } catch (e) {}
+            if (document.getElementById('sir-app').style.display !== 'none') { try { syncDataToSIR(); } catch (e) {} }
+            window.scrollTo(0, y);
+        }
+        function userIsTyping() {
+            const a = document.activeElement;
+            const typing = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.closest && (a.closest('#sgs-app') || a.closest('#sir-app'));
+            return !!typing && (Date.now() - lastLocalEditAt) < 5000;
+        }
+        function handleRemoteJob(job, key) {
+            if (!job || typeof job !== 'object' || !job.appData) return;
+            const applied = Number(localStorage.getItem('sgs_cloud_applied_' + key)) || 0;
+            const remoteTs = Number(job.updatedAt) || 0;
+            if (job.device === CLOUD_DEVICE_ID) { try { localStorage.setItem('sgs_cloud_applied_' + key, String(remoteTs)); } catch (e) {} return; }
+            if (remoteTs && remoteTs <= applied) return;
+            const dirty = Number(localStorage.getItem('sgs_cloud_dirty_' + key)) || 0;
+            if (cloudTimer || (dirty && dirty > remoteTs)) return; // this device has newer edits waiting to upload
+            if (userIsTyping()) {
+                pendingRemoteJob = { job, key };
+                clearTimeout(pendingRemoteTimer);
+                pendingRemoteTimer = setTimeout(() => { const p = pendingRemoteJob; pendingRemoteJob = null; if (p) handleRemoteJob(p.job, p.key); }, 2500);
+                return;
+            }
+            try {
+                applyCloudJob(job);
+                localStorage.setItem('sgs_cloud_applied_' + key, String(remoteTs));
+                const t = new Date();
+                setCloudStatus('synced', `(Updated ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')})`);
+            } catch (e) { console.warn('Applying cloud update failed:', e); setCloudStatus('error', '(apply)'); }
+        }
+        function attachCloudListener() {
+            if (!isFirebaseReady || !database) return;
+            const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
+            const key = cloudKey(jobNo);
+            if (cloudListenerRef && cloudListenerKey === key) return;
+            if (cloudListenerRef) { try { cloudListenerRef.off(); } catch (e) {} cloudListenerRef = null; cloudListenerKey = ''; }
+            if (!jobNo || !isCloudLive()) return;
+            cloudListenerKey = key;
+            cloudListenerRef = database.ref('sgs_jobs/' + key);
+            cloudListenerRef.on('value', snap => handleRemoteJob(snap.val(), key), err => { console.warn('Live listener error:', err); setCloudStatus('error', '(listen)'); });
+        }
+        window.addEventListener('load', () => { setTimeout(attachCloudListener, 300); });
+        // Re-attach when the Job No changes (typed, loaded or saved as).
+        document.addEventListener('change', e => { if (e.target && e.target.id === 'job-no-input') setTimeout(attachCloudListener, 100); }, true);
 
         function testFirebaseConnection() {
             const out = document.getElementById('tg-firebase-test-result');
@@ -1261,7 +1361,9 @@
                 tallyMode: tallyTabMode,
                 tallyExtraRows: localStorage.getItem('sgs_tally_extra_rows') || '[]',
                 sirPkgs: localStorage.getItem('sir_packages') || "[]",
-                date: dateStr
+                date: dateStr,
+                device: CLOUD_DEVICE_ID,
+                updatedAt: Date.now()
             };
         }
 
@@ -1424,7 +1526,7 @@
                     
                     // Start the SIR view fresh from the loaded Surveyor Notes data, and stop the old form
                     // from being saved over it while the page reloads.
-                    try { localStorage.removeItem(SIR_FORM_STATE_KEY); } catch (e) {}
+                    try { localStorage.removeItem(SIR_FORM_STATE_KEY); localStorage.setItem('sgs_cloud_applied_' + cloudKey(jobNo), String(savedJobs[jobNo].updatedAt || 0)); } catch (e) {}
                     suppressAutoSave = true;
                     clearTimeout(cloudTimer);
                     location.reload(); 
@@ -1651,6 +1753,7 @@
                 document.getElementById('tg-chatid-input').value = id;
                 document.getElementById('tg-firebase-url').value = localStorage.getItem('sgs_firebase_url') || '';
                 document.getElementById('tg-firebase-auto').checked = isCloudAuto();
+                document.getElementById('tg-firebase-live').checked = isCloudLive();
                 document.getElementById('tg-firebase-test-result').textContent = '';
                 document.getElementById('tgSettingsModal').style.display = 'flex';
             } catch (e) { alert("Error: " + e.message); }
@@ -1667,6 +1770,7 @@
             const newUrl = normaliseFirebaseUrl(document.getElementById('tg-firebase-url').value);
             localStorage.setItem('sgs_firebase_url', newUrl);
             localStorage.setItem('sgs_cloud_auto', document.getElementById('tg-firebase-auto').checked ? '1' : '0');
+            localStorage.setItem('sgs_cloud_live', document.getElementById('tg-firebase-live').checked ? '1' : '0');
             closeTelegramSettings();
             if (newUrl !== oldUrl) {
                 alert("✅ Settings မှတ်သားပြီးပါပြီ။ Firebase URL ပြောင်းထားလို့ App ကို ပြန်စပါမည်။");
@@ -1675,6 +1779,8 @@
             }
             alert("✅ Settings များ မှတ်သားပြီးပါပြီ။");
             refreshCloudStatus();
+            if (cloudListenerRef) { try { cloudListenerRef.off(); } catch (e) {} cloudListenerRef = null; cloudListenerKey = ''; }
+            attachCloudListener();
         }
 
         function syncToTelegramCloud() {

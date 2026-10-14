@@ -4942,6 +4942,8 @@
   .iso-invalid{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
   .pro-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 12px;margin-bottom:12px;border-radius:8px;background:#eaf4ee;border:1px solid #b8d8c5;font-size:12px;color:#222}
   .pro-btn{background:#2C5E43;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+  .job-card-item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#f9f9f9;padding:10px 12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;flex-wrap:wrap}
+  body.dark-mode .job-card-item{background:#24312b;border-color:#3d5448}
 </style>
 <script>
 (function(){
@@ -4967,20 +4969,17 @@
 
   // =========================================================================
   // 2. UNIFIED STORAGE: Save & Restore SIR 10% Weighing & Test Weight No
-  //    directly inside sgs_app_data_final so Save/Load/Refresh NEVER loses it
   // =========================================================================
   const sirDirectIds = [
     'dep_time', 'arr_time', 'arr_date', 'test_weight', 'test_weight_no',
     'sir-weight-percent', 'sir-tare-weight', 'sir-total-add', 'customFileName'
   ];
 
-  // Prevent initSirWeighingRows from wiping already-restored rows on page load
   window.initSirWeighingRows = function() {
     const container = document.getElementById('sir-weighing-container');
     if (container && container.querySelectorAll('.sir-weight-row').length > 0) return;
   };
 
-  // Sync Tare Weight from Job Setup (#tareWt) -> SIR Template Generator (#sir-tare-weight)
   function syncJobSetupTareToSIR() {
     const setupTare = document.getElementById('tareWt');
     const sirTare = document.getElementById('sir-tare-weight');
@@ -4990,22 +4989,18 @@
     }
   }
 
-  // Whenever Job Setup Tare Weight changes, immediately update SIR Tare Weight
   const setupTareEl = document.getElementById('tareWt');
   if (setupTareEl) {
     setupTareEl.addEventListener('input', syncJobSetupTareToSIR);
     setupTareEl.addEventListener('change', syncJobSetupTareToSIR);
   }
 
-  // Override saveToStorage() to store SIR fields + 10% Weighing Rows inside sgs_app_data_final
   let isRestoringStorage = false;
   let acTimer = null;
   if (typeof window.saveToStorage === 'function') {
     const origSaveToStorage = window.saveToStorage;
     window.saveToStorage = function() {
       if (typeof suppressAutoSave !== 'undefined' && suppressAutoSave) return;
-
-      // Capture existing SIR data in storage if we are currently in the middle of initial restore
       const prevSaved = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
 
       origSaveToStorage.apply(this, arguments);
@@ -5013,19 +5008,13 @@
       try {
         const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
         data.inputs = data.inputs || {};
-
-        // Always keep SIR Tare Weight synced with Job Setup Tare Weight
         syncJobSetupTareToSIR();
 
-        // Save SIR-specific fields into data.inputs
         sirDirectIds.forEach(id => {
           const el = document.getElementById(id);
-          if (el) {
-            data.inputs[id] = el.value;
-          }
+          if (el) data.inputs[id] = el.value;
         });
 
-        // Save 10% Weighing rows structured data
         const wContainer = document.getElementById('sir-weighing-container');
         const wInfo = document.getElementById('sir-weighing-info');
         if (wContainer) {
@@ -5046,7 +5035,6 @@
             data.sirWeighingInfoHtml = wInfo ? wInfo.innerHTML : '';
             data.sirWeighingInfoVisible = wInfo ? (wInfo.style.display !== 'none') : false;
           } else if (isRestoringStorage && Array.isArray(prevSaved.sirWeighingRows)) {
-            // Protect stored rows during initial loadFromStorage before SIR DOM is built
             data.sirWeighingRows = prevSaved.sirWeighingRows;
             data.sirWeighingInfoHtml = prevSaved.sirWeighingInfoHtml || '';
             data.sirWeighingInfoVisible = !!prevSaved.sirWeighingInfoVisible;
@@ -5056,11 +5044,8 @@
             data.sirWeighingInfoVisible = false;
           }
         }
-
         localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
-      } catch (e) {
-        console.warn('Error saving SIR data into sgs_app_data_final:', e);
-      }
+      } catch (e) {}
 
       if (typeof window.saveSIRFormState === 'function') {
         try { window.saveSIRFormState(); } catch (e) {}
@@ -5070,12 +5055,10 @@
     };
   }
 
-  // Helper to rebuild 10% Weighing Rows from sgs_app_data_final
   function restoreSIRDataFromMainStorage() {
     const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
     const inputs = data.inputs || {};
 
-    // Restore SIR direct inputs (Test Weight No, Total Add, etc.)
     sirDirectIds.forEach(id => {
       const el = document.getElementById(id);
       if (el && inputs[id] !== undefined) {
@@ -5083,11 +5066,8 @@
         el.setAttribute('value', inputs[id]);
       }
     });
-
-    // Always make sure SIR Tare Weight matches Job Setup Tare Weight
     syncJobSetupTareToSIR();
 
-    // Restore 10% Weighing Rows
     const wContainer = document.getElementById('sir-weighing-container');
     const wInfo = document.getElementById('sir-weighing-info');
     if (wContainer && Array.isArray(data.sirWeighingRows)) {
@@ -5122,7 +5102,6 @@
     }
   }
 
-  // Override loadFromStorage() so restoring a job also restores SIR 10% Weighing & Test Weight No
   if (typeof window.loadFromStorage === 'function') {
     const origLoadFromStorage = window.loadFromStorage;
     window.loadFromStorage = function() {
@@ -5134,7 +5113,6 @@
     };
   }
 
-  // Hook into 10% Weighing Row functions so any Calculate / Add Row / Remove Row immediately saves to main storage
   ['calculateSirWeightDetails', 'addSirWeightRow', 'removeSirWeightRow', 'reindexSirWeightRows'].forEach(fnName => {
     const origFn = window[fnName];
     if (typeof origFn === 'function') {
@@ -5147,22 +5125,13 @@
     }
   });
 
-  // Also save to main storage whenever user types in any #sir-app input/textarea/select
   document.addEventListener('input', e => {
-    if (e.target && e.target.closest && e.target.closest('#sir-app')) {
-      window.saveToStorage();
-    }
+    if (e.target && e.target.closest && e.target.closest('#sir-app')) window.saveToStorage();
   });
   document.addEventListener('change', e => {
-    if (e.target && e.target.closest && e.target.closest('#sir-app')) {
-      window.saveToStorage();
-    }
+    if (e.target && e.target.closest && e.target.closest('#sir-app')) window.saveToStorage();
   });
 
-  // Override syncDataToSIR() so switching to SIR tab or clicking Sync:
-  // 1) Always sets SIR Tare Weight = Job Setup Tare Weight
-  // 2) Keeps Total Additional Kgs Blank unless user typed a value in SIR
-  // 3) Never wipes 10% Weighing Details or Test Weight No
   if (typeof window.syncDataToSIR === 'function') {
     const origSyncDataToSIR = window.syncDataToSIR;
     window.syncDataToSIR = function() {
@@ -5173,21 +5142,15 @@
       const currentTestWt = document.getElementById('test_weight')?.value || savedInputs['test_weight'] || '10 Kgs';
 
       origSyncDataToSIR.apply(this, arguments);
-
-      // Tare Weight in SIR must match Job Setup Tare Weight
       syncJobSetupTareToSIR();
 
-      // Keep Total Additional Kgs as user's SIR value (or blank by default, never auto-filled from gs-additional)
       const addEl = document.getElementById('sir-total-add');
       if (addEl) addEl.value = currentAdd;
-
-      // Keep Test Weight & Test Weight No intact
       const testNoEl = document.getElementById('test_weight_no');
       if (testNoEl) testNoEl.value = currentTestNo;
       const testWtEl = document.getElementById('test_weight');
       if (testWtEl) testWtEl.value = currentTestWt;
 
-      // Ensure 10% Weighing rows remain intact
       const wContainer = document.getElementById('sir-weighing-container');
       if (wContainer && wContainer.querySelectorAll('.sir-weight-row').length === 0 && Array.isArray(savedData.sirWeighingRows) && savedData.sirWeighingRows.length > 0) {
         restoreSIRDataFromMainStorage();
@@ -5196,61 +5159,28 @@
     };
   }
 
-  // Override clearFormOnly() (New Job / Clear) so SIR data is ONLY cleared when starting a New Job or Clearing
   if (typeof window.clearFormOnly === 'function') {
     const origClearFormOnly = window.clearFormOnly;
     window.clearFormOnly = function() {
-      // Clear SIR DOM elements first
       const wContainer = document.getElementById('sir-weighing-container');
-      if (wContainer) {
-        wContainer.innerHTML = '';
-        wContainer.dataset.rowCount = '0';
-      }
+      if (wContainer) { wContainer.innerHTML = ''; wContainer.dataset.rowCount = '0'; }
       const wInfo = document.getElementById('sir-weighing-info');
-      if (wInfo) {
-        wInfo.innerHTML = '';
-        wInfo.style.display = 'none';
-      }
+      if (wInfo) { wInfo.innerHTML = ''; wInfo.style.display = 'none'; }
       const sirResetMap = {
-        'job_ref': '',
-        'dep_time': '7:00 Hrs',
-        'arr_time': '',
-        'arr_date': '',
-        'shipper': '',
-        'buyer': '',
-        'commodity': '',
-        'quantity': '',
-        'packing': 'IN NEW SINGLE PP BAGS',
-        'place_insp': '',
-        'vessel': '',
-        'destination': '',
-        'inspector': 'KYAW NAY AUNG',
-        'test_weight': '10 Kgs',
-        'test_weight_no': '',
-        'sir-weight-percent': '0.10',
-        'sir-tare-weight': '0.120',
-        'sir-total-add': '',
-        'customFileName': '',
-        'col_ctn': '',
-        'col_commence': '',
-        'col_complete': '',
-        'col_bags': '',
-        'col_gross': '',
-        'col_tare': '',
-        'col_seal': '',
-        'col_ave_gross': '',
-        'col_dec_tare': '',
-        'col_color': ''
+        'job_ref': '', 'dep_time': '7:00 Hrs', 'arr_time': '', 'arr_date': '',
+        'shipper': '', 'buyer': '', 'commodity': '', 'quantity': '',
+        'packing': 'IN NEW SINGLE PP BAGS', 'place_insp': '', 'vessel': '',
+        'destination': '', 'inspector': 'KYAW NAY AUNG', 'test_weight': '10 Kgs',
+        'test_weight_no': '', 'sir-weight-percent': '0.10', 'sir-tare-weight': '0.120',
+        'sir-total-add': '', 'customFileName': '', 'col_ctn': '', 'col_commence': '',
+        'col_complete': '', 'col_bags': '', 'col_gross': '', 'col_tare': '',
+        'col_seal': '', 'col_ave_gross': '', 'col_dec_tare': '', 'col_color': ''
       };
       Object.entries(sirResetMap).forEach(([id, val]) => {
         const el = document.getElementById(id);
-        if (el) {
-          el.value = val;
-          el.setAttribute('value', val);
-        }
+        if (el) { el.value = val; el.setAttribute('value', val); }
       });
       try { localStorage.removeItem('sir_generator_form_state_v1'); } catch (e) {}
-
       origClearFormOnly.apply(this, arguments);
       syncJobSetupTareToSIR();
       window.saveToStorage();
@@ -5258,7 +5188,219 @@
   }
 
   // =========================================================================
-  // 3. ISO 6346 Container Check-Digit Validator
+  // 3. ENHANCED JOB SHARING & SMART BACKUP / RESTORE (MERGE vs OVERWRITE)
+  // =========================================================================
+  // Upgrade Load Jobs Modal to include:
+  // - "📤 Share" button per job
+  // - "📤 Share Active Job" & "📥 Import Shared Job" toolbar at the top
+  window.renderJobsList = function(savedJobs, isOfflineError = false) {
+    const listContainer = document.getElementById('savedJobsList');
+    if (!listContainer) return;
+    listContainer.innerHTML = '';
+
+    // Top Quick Action Bar inside Load Modal
+    const actionHeader = document.createElement('div');
+    actionHeader.style.cssText = 'display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; padding-bottom:10px; border-bottom:1px dashed #ccc;';
+    actionHeader.innerHTML = `
+      <button class="pro-btn" style="flex:1; background:#8e44ad; justify-content:center;" onclick="shareCurrentActiveJob()">📤 လက်ရှိဖွင့်ထားသော Job ကို Share မည်</button>
+      <button class="pro-btn" style="flex:1; background:#2980b9; justify-content:center;" onclick="document.getElementById('importBackupInput').click()">📥 Job / Backup ဖိုင်သွင်းမည်</button>
+    `;
+    listContainer.appendChild(actionHeader);
+
+    if (isOfflineError) {
+      listContainer.insertAdjacentHTML('beforeend', '<div style="background:#f39c12; color:white; padding:6px; text-align:center; font-size:12px; margin-bottom:10px; border-radius:4px;">⚠️ Cloud သို့ချိတ်ဆက်မရသဖြင့် ဖုန်းတွင်းရှိ ဒေတာများကိုသာ ပြသထားပါသည်။</div>');
+    }
+
+    const jobKeys = Object.keys(savedJobs || {});
+    if (jobKeys.length === 0) {
+      listContainer.insertAdjacentHTML('beforeend', '<p style="text-align:center; padding: 20px;">Saved Jobs မရှိသေးပါ။</p>');
+      return;
+    }
+
+    jobKeys.reverse().forEach(key => {
+      const item = savedJobs[key] || {};
+      const appData = safeParseJSON(item.appData, {});
+      const shipper = (appData.inputs && appData.inputs['shipper-input']) ? appData.inputs['shipper-input'] : '';
+      const fcl = (appData.inputs && appData.inputs['noOfCtn']) ? appData.inputs['noOfCtn'] + ' FCL' : '';
+      const safeKey = String(key).replace(/'/g, "\\'");
+
+      listContainer.insertAdjacentHTML('beforeend', `
+        <div class="job-card-item">
+          <div style="flex:1; min-width:140px;">
+            <b style="font-size:15px; color:var(--primary);">Job: ${escapeHtml(key)}</b>
+            ${fcl ? `<span style="background:#eef5f0; color:#2C5E43; font-size:11px; padding:2px 6px; border-radius:4px; font-weight:bold; margin-left:4px;">${escapeHtml(fcl)}</span>` : ''}
+            <br><small style="color:#666;">${escapeHtml(item.date || '')}${shipper ? ' • ' + escapeHtml(shipper) : ''}</small>
+          </div>
+          <div style="display:flex; gap:5px; align-items:center;">
+            <button class="btn-small" style="background:#3498db; padding:7px 10px;" onclick="loadJobFromDB('${safeKey}')">📂 Load</button>
+            <button class="btn-small" style="background:#8e44ad; padding:7px 10px;" onclick="shareSingleSavedJob('${safeKey}')" title="Share this job">📤 Share</button>
+            <button class="btn-small btn-delete" style="width:30px; height:30px;" onclick="deleteJobFromDB('${safeKey}')">🗑️</button>
+          </div>
+        </div>
+      `);
+    });
+  };
+
+  // Share any Saved Job from the Saved Jobs list
+  window.shareSingleSavedJob = function(jobNo) {
+    const savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+    const job = savedJobs[jobNo];
+    if (!job) { alert('⚠️ Job Data မတွေ့ပါ။'); return; }
+
+    const sharePayload = {
+      sgs_share_type: 'SINGLE_JOB_V1',
+      jobNo: jobNo,
+      exportedAt: new Date().toLocaleString(),
+      jobData: job
+    };
+    const cleanName = String(jobNo).trim().replace(/[\\/:*?"<>|\s]+/g, '_');
+    const fileName = `SGS_Job_${cleanName}.json`;
+    const blob = new Blob([JSON.stringify(sharePayload, null, 2)], { type: 'application/json' });
+    closeLoadModal();
+    showExportModal(blob, fileName, 'application/json', `Shared Job [${jobNo}]`);
+  };
+
+  // Share the currently active Job on screen directly (auto-saves it first)
+  window.shareCurrentActiveJob = function() {
+    window.saveToStorage();
+    let jobNo = (document.getElementById('job-no-input')?.value || '').trim();
+    if (!jobNo) {
+      jobNo = prompt('Share လုပ်ရန် Job No. ရိုက်ထည့်ပါ:', 'Job_' + new Date().toISOString().slice(0,10));
+      if (!jobNo) return;
+      const inp = document.getElementById('job-no-input');
+      if (inp) { inp.value = jobNo.trim(); inp.setAttribute('value', jobNo.trim()); }
+    }
+    const jobData = buildJobData();
+    const savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+    savedJobs[jobNo] = jobData;
+    localStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
+    shareSingleSavedJob(jobNo);
+  };
+
+  // Smart Restore: handles BOTH Single Shared Job files AND Full Backup files (with Merge or Overwrite option)
+  window.importBackupFile = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        let data = JSON.parse(e.target.result);
+        if (typeof data === 'string') data = JSON.parse(data);
+
+        // CASE 1: Single Shared Job File (sgs_share_type === 'SINGLE_JOB_V1')
+        if (data && data.sgs_share_type === 'SINGLE_JOB_V1' && data.jobNo && data.jobData) {
+          const jobNo = String(data.jobNo).trim();
+          const savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+          if (savedJobs[jobNo]) {
+            if (!confirm(`သင့်ဖုန်းထဲတွင် Job [${jobNo}] ရှိနေပြီးသားဖြစ်သည်။ အသစ်ဖြင့် အစားထိုးမည်လား?`)) {
+              event.target.value = '';
+              return;
+            }
+          }
+          savedJobs[jobNo] = data.jobData;
+          localStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
+
+          // Also sync to Firebase if connected
+          if (typeof isFirebaseReady !== 'undefined' && isFirebaseReady && database) {
+            try { database.ref('sgs_jobs/' + cloudKey(jobNo)).set(data.jobData); } catch (err) {}
+          }
+
+          if (confirm(`✅ Shared Job [${jobNo}] ကို လက်ခံရရှိပြီး Saved Jobs ထဲသို့ ထည့်သွင်းပြီးပါပြီ။\n\nယခု Job [${jobNo}] ကို တန်းဖွင့်မည်လား?`)) {
+            const job = data.jobData;
+            localStorage.setItem('sgs_app_data_final', job.appData || '{}');
+            localStorage.setItem('sgs_vgm_overrides', job.vgmData || '{}');
+            localStorage.setItem('sgs_custom_cols', job.customCols || '[]');
+            if (job.fixedHeadings) localStorage.setItem('sgs_fixed_headings', job.fixedHeadings);
+            if (job.tallyTabCols) localStorage.setItem('sgs_tally_tab_cols', job.tallyTabCols);
+            localStorage.setItem('sgs_tally_extra_rows', job.tallyExtraRows || '[]');
+            if (job.tallyMode) { localStorage.setItem('sgs_tally_mode', job.tallyMode); tallyTabMode = job.tallyMode; }
+            if (job.sirPkgs) localStorage.setItem('sir_packages', job.sirPkgs);
+            loadFromStorage();
+            closeLoadModal();
+          } else if (document.getElementById('loadJobModal')?.style.display === 'flex') {
+            openLoadModal();
+          }
+          event.target.value = '';
+          return;
+        }
+
+        // CASE 2: Full Backup File -> Offer Smart Merge (Default) or Full Overwrite
+        const incomingJobs = safeParseJSON(data.sgs_saved_jobs, {});
+        const existingJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+        const existingCount = Object.keys(existingJobs).length;
+        const incomingCount = Object.keys(incomingJobs).length;
+
+        let mergeMode = true;
+        if (existingCount > 0 && incomingCount > 0) {
+          mergeMode = confirm(
+            `📦 Backup ဖိုင်တွင် Saved Jobs (${incomingCount}) ခု ပါဝင်ပါသည်။\n\n` +
+            `• [OK] နှိပ်ပါက လက်ရှိဖုန်းထဲရှိ Jobs (${existingCount}) ခု မပျက်ဘဲ အသစ်များကို ပေါင်းထည့်ပေးပါမည် (Smart Merge - အကြံပြုပါသည်)။\n` +
+            `• [Cancel] နှိပ်ပါက အဟောင်းများကိုဖျက်ပြီး Backup ဖိုင်အတိုင်း အားလုံး အစားထိုးပါမည် (Overwrite)။`
+          );
+        }
+
+        const backupValue = (value) => typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
+        if (data.sgs_app_data_final) localStorage.setItem('sgs_app_data_final', backupValue(data.sgs_app_data_final));
+        if (data.sgs_vgm_overrides) localStorage.setItem('sgs_vgm_overrides', backupValue(data.sgs_vgm_overrides));
+        if (data.sgs_custom_cols) localStorage.setItem('sgs_custom_cols', backupValue(data.sgs_custom_cols));
+        if (data.sgs_tally_tab_cols !== undefined) localStorage.setItem('sgs_tally_tab_cols', backupValue(data.sgs_tally_tab_cols));
+        if (data.sgs_tally_extra_rows !== undefined) {
+          localStorage.setItem('sgs_tally_extra_rows', backupValue(data.sgs_tally_extra_rows));
+          saveTallyExtraRows(safeParseJSON(data.sgs_tally_extra_rows, []));
+        }
+        if (data.sgs_tally_default_bags !== undefined) {
+          localStorage.setItem('sgs_tally_default_bags', backupValue(data.sgs_tally_default_bags));
+          tallyDefaultBags = Math.max(0, Number(data.sgs_tally_default_bags) || 0);
+        }
+        if (data.sgs_tally_mode) { localStorage.setItem('sgs_tally_mode', data.sgs_tally_mode); tallyTabMode = data.sgs_tally_mode; }
+        if (data.sgs_fixed_headings !== undefined) {
+          localStorage.setItem('sgs_fixed_headings', backupValue(data.sgs_fixed_headings));
+          fixedHeadings = safeParseJSON(data.sgs_fixed_headings, fixedHeadings);
+        }
+        if (data.sgs_ac_hist) localStorage.setItem('sgs_ac_hist', backupValue(data.sgs_ac_hist));
+
+        const pkgs = data.sir_packages !== undefined ? data.sir_packages : data.sgs_other_packages;
+        if (pkgs !== undefined) localStorage.setItem('sir_packages', backupValue(pkgs));
+
+        if (data.sgs_saved_jobs) {
+          if (mergeMode) {
+            const merged = Object.assign({}, existingJobs, incomingJobs);
+            localStorage.setItem('sgs_saved_jobs', JSON.stringify(merged));
+          } else {
+            localStorage.setItem('sgs_saved_jobs', backupValue(data.sgs_saved_jobs));
+          }
+        }
+
+        loadFromStorage();
+        if (typeof renderTallyTab === 'function') renderTallyTab();
+        alert(`✅ Restore အောင်မြင်ပါသည်! (${mergeMode ? 'Smart Merge ပေါင်းထည့်ပြီး' : 'Full Overwrite လဲလှယ်ပြီး'})`);
+      } catch (err) {
+        alert('❌ ဖိုင်မှားယွင်းနေပါသည်: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
+  // Add "📤 Share Job" item into Main Menu for instant 1-click sharing
+  function injectShareMenuButton() {
+    const menu = document.getElementById('mainMenu');
+    if (!menu || document.getElementById('menu-share-job-btn')) return;
+    const loadBtn = Array.from(menu.querySelectorAll('.menu-item')).find(b => b.textContent.includes('Load'));
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'menu-item';
+    shareBtn.id = 'menu-share-job-btn';
+    shareBtn.innerHTML = '<i>📤</i> Share Job';
+    shareBtn.onclick = function() { shareCurrentActiveJob(); };
+    if (loadBtn && loadBtn.nextSibling) {
+      menu.insertBefore(shareBtn, loadBtn.nextSibling);
+    } else {
+      menu.appendChild(shareBtn);
+    }
+  }
+
+  // =========================================================================
+  // 4. ISO 6346 Container Check-Digit Validator
   // =========================================================================
   const isoMap={A:10,B:12,C:13,D:14,E:15,F:16,G:17,H:18,I:19,J:20,K:21,L:23,M:24,N:25,O:26,P:27,Q:28,R:29,S:30,T:31,U:32,V:34,W:35,X:36,Y:37,Z:38};
   window.validateISO6346=function(v){
@@ -5283,7 +5425,7 @@
   };
 
   // =========================================================================
-  // 4. Smart Auto-Complete (<datalist>)
+  // 5. Smart Auto-Complete (<datalist>)
   // =========================================================================
   const acFields=['shipper-input','buyer-input','commodity-input','packing-input','inspection-place-input','vessel-input','destination-input','inspector-input'];
   function initAC(){
@@ -5305,7 +5447,7 @@
   }
 
   // =========================================================================
-  // 5. Theme Switcher + Weight Tally Undo History
+  // 6. Theme Switcher + Weight Tally Undo History
   // =========================================================================
   const themes=['normal','dark-mode','sunlight-mode'];let tIdx=Math.max(0,themes.indexOf(localStorage.getItem('sgs_theme')||'normal'));
   function setTheme(t){document.body.classList.remove('dark-mode','sunlight-mode');if(t!=='normal')document.body.classList.add(t);localStorage.setItem('sgs_theme',t);const b=document.getElementById('nav-theme');if(b)b.textContent=t==='dark-mode'?'🌙 Dark':(t==='sunlight-mode'?'☀️ Sun':'🌓 Theme');}
@@ -5338,7 +5480,7 @@
   window.addEventListener('DOMContentLoaded',()=>{
     ensureNoOfCtnOptions();
     initAC();
-    // Restore SIR 10% Weighing Rows & Test Weight No from sgs_app_data_final
+    injectShareMenuButton();
     restoreSIRDataFromMainStorage();
 
     const nav=document.getElementById('master-nav');

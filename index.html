@@ -16,7 +16,7 @@
     <!-- SIR App Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
 
     <style>
         /* === Master App Switcher Styles === */
@@ -621,6 +621,7 @@
     <!-- MASTER & APP SCRIPTS                       -->
     <!-- ========================================== -->
     <script>
+        const MAX_FCL = 40;
         let vgmOverrides = {}; // Global scope for sync consistency
         // Set while a saved job is being loaded and the page is about to reload: the old form must not
         // be written back over the job that was just loaded (pagehide/visibilitychange would do that).
@@ -753,7 +754,7 @@
 
             // Sync New Weight Details
             document.getElementById('sir-tare-weight').value = document.getElementById('tareWt').value || '';
-            document.getElementById('sir-total-add').value = document.getElementById('gs-additional').innerText || '';
+            // Total Additional Kgs kept blank unless manually filled in SIR
 
             document.getElementById('sir-app').querySelectorAll('textarea:not(.col-input)').forEach(el => { 
                 el.style.height = 'auto'; 
@@ -3840,11 +3841,7 @@
             }
         }
 
-        function initSirWeighingRows() {
-            // Keep container empty initially until calculated
-            let container = document.getElementById('sir-weighing-container');
-            if(container) container.innerHTML = '';
-        }
+        function initSirWeighingRows() {}
 
         function calculateSirWeightDetails() {
             saveSIRFormState();
@@ -3931,7 +3928,6 @@
 
         // SIR TEMPLATE GENERATOR SCRIPTS
         // ===============================================
-        const MAX_FCL = 40;
         const DEFAULT_SIR_TEMPLATE_BASE64 = "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";
 
         function base64ToArrayBuffer(base64) {
@@ -4932,5 +4928,432 @@
             reader.readAsArrayBuffer(file);
         }
     </script>
+
+<!-- === SGS & SIR CLEAN PRO UPGRADE === -->
+<style>
+  body.dark-mode{background:#121815;color:#e2ece7}
+  body.dark-mode .card,body.dark-mode .sir-container,body.dark-mode .modal-content,body.dark-mode .quick-paste-card{background:#1c2621!important;color:#e2ece7!important;border-color:#2f4238!important}
+  body.dark-mode input,body.dark-mode select,body.dark-mode textarea,body.dark-mode .excel-table td,body.dark-mode .ctn-table td,body.dark-mode .tally-tab-table td{background:#24312b!important;color:#f1f7f4!important;border-color:#3d5448!important}
+  body.dark-mode .sgs-container h1,body.dark-mode .sgs-container h2,body.dark-mode .sgs-container h3,body.dark-mode .sir-container h2,body.dark-mode .sir-container h3,body.dark-mode label{color:#68d391!important}
+  body.sunlight-mode,body.sunlight-mode .card,body.sunlight-mode .sir-container{background:#fff!important;color:#000!important;border:2px solid #000!important;box-shadow:none!important}
+  body.sunlight-mode input,body.sunlight-mode select,body.sunlight-mode textarea{border:2px solid #000!important;font-weight:800!important;color:#000!important;background:#fff!important}
+  .iso-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;margin-top:2px;white-space:nowrap}
+  .iso-valid{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+  .iso-invalid{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+  .pro-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 12px;margin-bottom:12px;border-radius:8px;background:#eaf4ee;border:1px solid #b8d8c5;font-size:12px;color:#222}
+  .pro-btn{background:#2C5E43;color:#fff;border:none;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+</style>
+<script>
+(function(){
+  // =========================================================================
+  // 1. Ensure No Of CTN (1 to 40 FCL) Dropdown is Always Populated
+  // =========================================================================
+  function ensureNoOfCtnOptions(){
+    const sel = document.getElementById('noOfCtn');
+    if (!sel) return;
+    if (sel.options.length < 40) {
+      const currentVal = sel.value || '1';
+      sel.innerHTML = '';
+      for (let i = 1; i <= 40; i++) {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = i + ' FCL';
+        sel.appendChild(opt);
+      }
+      sel.value = currentVal;
+    }
+  }
+  ensureNoOfCtnOptions();
+
+  // =========================================================================
+  // 2. UNIFIED STORAGE: Save & Restore SIR 10% Weighing & Test Weight No
+  //    directly inside sgs_app_data_final so Save/Load/Refresh NEVER loses it
+  // =========================================================================
+  const sirDirectIds = [
+    'dep_time', 'arr_time', 'arr_date', 'test_weight', 'test_weight_no',
+    'sir-weight-percent', 'sir-tare-weight', 'sir-total-add', 'customFileName'
+  ];
+
+  // Prevent initSirWeighingRows from wiping already-restored rows on page load
+  window.initSirWeighingRows = function() {
+    const container = document.getElementById('sir-weighing-container');
+    if (container && container.querySelectorAll('.sir-weight-row').length > 0) return;
+  };
+
+  // Sync Tare Weight from Job Setup (#tareWt) -> SIR Template Generator (#sir-tare-weight)
+  function syncJobSetupTareToSIR() {
+    const setupTare = document.getElementById('tareWt');
+    const sirTare = document.getElementById('sir-tare-weight');
+    if (setupTare && sirTare) {
+      sirTare.value = setupTare.value || '';
+      sirTare.setAttribute('value', sirTare.value);
+    }
+  }
+
+  // Whenever Job Setup Tare Weight changes, immediately update SIR Tare Weight
+  const setupTareEl = document.getElementById('tareWt');
+  if (setupTareEl) {
+    setupTareEl.addEventListener('input', syncJobSetupTareToSIR);
+    setupTareEl.addEventListener('change', syncJobSetupTareToSIR);
+  }
+
+  // Override saveToStorage() to store SIR fields + 10% Weighing Rows inside sgs_app_data_final
+  let isRestoringStorage = false;
+  let acTimer = null;
+  if (typeof window.saveToStorage === 'function') {
+    const origSaveToStorage = window.saveToStorage;
+    window.saveToStorage = function() {
+      if (typeof suppressAutoSave !== 'undefined' && suppressAutoSave) return;
+
+      // Capture existing SIR data in storage if we are currently in the middle of initial restore
+      const prevSaved = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
+
+      origSaveToStorage.apply(this, arguments);
+
+      try {
+        const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
+        data.inputs = data.inputs || {};
+
+        // Always keep SIR Tare Weight synced with Job Setup Tare Weight
+        syncJobSetupTareToSIR();
+
+        // Save SIR-specific fields into data.inputs
+        sirDirectIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            data.inputs[id] = el.value;
+          }
+        });
+
+        // Save 10% Weighing rows structured data
+        const wContainer = document.getElementById('sir-weighing-container');
+        const wInfo = document.getElementById('sir-weighing-info');
+        if (wContainer) {
+          const domRows = wContainer.querySelectorAll('.sir-weight-row');
+          if (domRows.length > 0) {
+            const rowsArr = [];
+            domRows.forEach((row, idx) => {
+              const num = idx + 1;
+              const bagInp = row.querySelector('.bag-input') || document.getElementById(`sir-wlist-bag-${num}`);
+              const wtInp = row.querySelector('.wt-input-sir') || document.getElementById(`sir-wlist-wt-${num}`);
+              const bVal = bagInp ? bagInp.value : '';
+              const wVal = wtInp ? wtInp.value : '';
+              rowsArr.push({ bag: bVal, wt: wVal });
+              data.inputs[`sir-wlist-bag-${num}`] = bVal;
+              data.inputs[`sir-wlist-wt-${num}`] = wVal;
+            });
+            data.sirWeighingRows = rowsArr;
+            data.sirWeighingInfoHtml = wInfo ? wInfo.innerHTML : '';
+            data.sirWeighingInfoVisible = wInfo ? (wInfo.style.display !== 'none') : false;
+          } else if (isRestoringStorage && Array.isArray(prevSaved.sirWeighingRows)) {
+            // Protect stored rows during initial loadFromStorage before SIR DOM is built
+            data.sirWeighingRows = prevSaved.sirWeighingRows;
+            data.sirWeighingInfoHtml = prevSaved.sirWeighingInfoHtml || '';
+            data.sirWeighingInfoVisible = !!prevSaved.sirWeighingInfoVisible;
+          } else {
+            data.sirWeighingRows = [];
+            data.sirWeighingInfoHtml = '';
+            data.sirWeighingInfoVisible = false;
+          }
+        }
+
+        localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+      } catch (e) {
+        console.warn('Error saving SIR data into sgs_app_data_final:', e);
+      }
+
+      if (typeof window.saveSIRFormState === 'function') {
+        try { window.saveSIRFormState(); } catch (e) {}
+      }
+      clearTimeout(acTimer);
+      acTimer = setTimeout(saveAutoHistory, 300);
+    };
+  }
+
+  // Helper to rebuild 10% Weighing Rows from sgs_app_data_final
+  function restoreSIRDataFromMainStorage() {
+    const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
+    const inputs = data.inputs || {};
+
+    // Restore SIR direct inputs (Test Weight No, Total Add, etc.)
+    sirDirectIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && inputs[id] !== undefined) {
+        el.value = inputs[id];
+        el.setAttribute('value', inputs[id]);
+      }
+    });
+
+    // Always make sure SIR Tare Weight matches Job Setup Tare Weight
+    syncJobSetupTareToSIR();
+
+    // Restore 10% Weighing Rows
+    const wContainer = document.getElementById('sir-weighing-container');
+    const wInfo = document.getElementById('sir-weighing-info');
+    if (wContainer && Array.isArray(data.sirWeighingRows)) {
+      if (data.sirWeighingRows.length > 0) {
+        let html = '';
+        data.sirWeighingRows.forEach((item, idx) => {
+          const num = idx + 1;
+          const bVal = item.bag !== undefined ? item.bag : (inputs[`sir-wlist-bag-${num}`] || '');
+          const wVal = item.wt !== undefined ? item.wt : (inputs[`sir-wlist-wt-${num}`] || '');
+          html += `
+          <div class="sir-weight-row" style="display: flex; align-items: center; gap: 8px; width:100%; box-sizing:border-box; margin-bottom: 8px;">
+              <div class="sr-label" style="flex: 0 0 30px; font-weight:bold; font-size:13px; color:#333; line-height:1.2; text-align:center;">Sr.<br>${num}</div>
+              <input type="number" class="bag-input" id="sir-wlist-bag-${num}" value="${escapeHtml(String(bVal))}" style="flex: 1; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:15px; text-align:center; min-width: 0; box-sizing: border-box;" placeholder="Bags" oninput="saveToStorage()">
+              <input type="number" step="0.001" class="wt-input-sir" id="sir-wlist-wt-${num}" value="${escapeHtml(String(wVal))}" style="flex: 1.5; padding:10px; border:1px solid #3498db; border-radius:4px; font-weight:bold; color:#000; font-size:15px; text-align:center; min-width: 0; box-sizing: border-box;" placeholder="Weight Kgs" oninput="saveToStorage()">
+              <button class="btn-small btn-delete" style="flex: 0 0 32px; height: 32px; padding:0;" onclick="removeSirWeightRow(this)">x</button>
+          </div>`;
+        });
+        wContainer.innerHTML = html;
+        wContainer.dataset.rowCount = String(data.sirWeighingRows.length);
+        if (wInfo) {
+          wInfo.innerHTML = data.sirWeighingInfoHtml || '';
+          wInfo.style.display = data.sirWeighingInfoVisible && data.sirWeighingInfoHtml ? 'block' : 'none';
+        }
+      } else {
+        wContainer.innerHTML = '';
+        wContainer.dataset.rowCount = '0';
+        if (wInfo) {
+          wInfo.innerHTML = '';
+          wInfo.style.display = 'none';
+        }
+      }
+    }
+  }
+
+  // Override loadFromStorage() so restoring a job also restores SIR 10% Weighing & Test Weight No
+  if (typeof window.loadFromStorage === 'function') {
+    const origLoadFromStorage = window.loadFromStorage;
+    window.loadFromStorage = function() {
+      isRestoringStorage = true;
+      origLoadFromStorage.apply(this, arguments);
+      restoreSIRDataFromMainStorage();
+      isRestoringStorage = false;
+      window.saveToStorage();
+    };
+  }
+
+  // Hook into 10% Weighing Row functions so any Calculate / Add Row / Remove Row immediately saves to main storage
+  ['calculateSirWeightDetails', 'addSirWeightRow', 'removeSirWeightRow', 'reindexSirWeightRows'].forEach(fnName => {
+    const origFn = window[fnName];
+    if (typeof origFn === 'function') {
+      window[fnName] = function() {
+        const res = origFn.apply(this, arguments);
+        window.saveToStorage();
+        if (typeof scheduleCloudUpload === 'function') scheduleCloudUpload();
+        return res;
+      };
+    }
+  });
+
+  // Also save to main storage whenever user types in any #sir-app input/textarea/select
+  document.addEventListener('input', e => {
+    if (e.target && e.target.closest && e.target.closest('#sir-app')) {
+      window.saveToStorage();
+    }
+  });
+  document.addEventListener('change', e => {
+    if (e.target && e.target.closest && e.target.closest('#sir-app')) {
+      window.saveToStorage();
+    }
+  });
+
+  // Override syncDataToSIR() so switching to SIR tab or clicking Sync:
+  // 1) Always sets SIR Tare Weight = Job Setup Tare Weight
+  // 2) Keeps Total Additional Kgs Blank unless user typed a value in SIR
+  // 3) Never wipes 10% Weighing Details or Test Weight No
+  if (typeof window.syncDataToSIR === 'function') {
+    const origSyncDataToSIR = window.syncDataToSIR;
+    window.syncDataToSIR = function() {
+      const savedData = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {} });
+      const savedInputs = savedData.inputs || {};
+      const currentAdd = document.getElementById('sir-total-add')?.value || savedInputs['sir-total-add'] || '';
+      const currentTestNo = document.getElementById('test_weight_no')?.value || savedInputs['test_weight_no'] || '';
+      const currentTestWt = document.getElementById('test_weight')?.value || savedInputs['test_weight'] || '10 Kgs';
+
+      origSyncDataToSIR.apply(this, arguments);
+
+      // Tare Weight in SIR must match Job Setup Tare Weight
+      syncJobSetupTareToSIR();
+
+      // Keep Total Additional Kgs as user's SIR value (or blank by default, never auto-filled from gs-additional)
+      const addEl = document.getElementById('sir-total-add');
+      if (addEl) addEl.value = currentAdd;
+
+      // Keep Test Weight & Test Weight No intact
+      const testNoEl = document.getElementById('test_weight_no');
+      if (testNoEl) testNoEl.value = currentTestNo;
+      const testWtEl = document.getElementById('test_weight');
+      if (testWtEl) testWtEl.value = currentTestWt;
+
+      // Ensure 10% Weighing rows remain intact
+      const wContainer = document.getElementById('sir-weighing-container');
+      if (wContainer && wContainer.querySelectorAll('.sir-weight-row').length === 0 && Array.isArray(savedData.sirWeighingRows) && savedData.sirWeighingRows.length > 0) {
+        restoreSIRDataFromMainStorage();
+      }
+      window.saveToStorage();
+    };
+  }
+
+  // Override clearFormOnly() (New Job / Clear) so SIR data is ONLY cleared when starting a New Job or Clearing
+  if (typeof window.clearFormOnly === 'function') {
+    const origClearFormOnly = window.clearFormOnly;
+    window.clearFormOnly = function() {
+      // Clear SIR DOM elements first
+      const wContainer = document.getElementById('sir-weighing-container');
+      if (wContainer) {
+        wContainer.innerHTML = '';
+        wContainer.dataset.rowCount = '0';
+      }
+      const wInfo = document.getElementById('sir-weighing-info');
+      if (wInfo) {
+        wInfo.innerHTML = '';
+        wInfo.style.display = 'none';
+      }
+      const sirResetMap = {
+        'job_ref': '',
+        'dep_time': '7:00 Hrs',
+        'arr_time': '',
+        'arr_date': '',
+        'shipper': '',
+        'buyer': '',
+        'commodity': '',
+        'quantity': '',
+        'packing': 'IN NEW SINGLE PP BAGS',
+        'place_insp': '',
+        'vessel': '',
+        'destination': '',
+        'inspector': 'KYAW NAY AUNG',
+        'test_weight': '10 Kgs',
+        'test_weight_no': '',
+        'sir-weight-percent': '0.10',
+        'sir-tare-weight': '0.120',
+        'sir-total-add': '',
+        'customFileName': '',
+        'col_ctn': '',
+        'col_commence': '',
+        'col_complete': '',
+        'col_bags': '',
+        'col_gross': '',
+        'col_tare': '',
+        'col_seal': '',
+        'col_ave_gross': '',
+        'col_dec_tare': '',
+        'col_color': ''
+      };
+      Object.entries(sirResetMap).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.value = val;
+          el.setAttribute('value', val);
+        }
+      });
+      try { localStorage.removeItem('sir_generator_form_state_v1'); } catch (e) {}
+
+      origClearFormOnly.apply(this, arguments);
+      syncJobSetupTareToSIR();
+      window.saveToStorage();
+    };
+  }
+
+  // =========================================================================
+  // 3. ISO 6346 Container Check-Digit Validator
+  // =========================================================================
+  const isoMap={A:10,B:12,C:13,D:14,E:15,F:16,G:17,H:18,I:19,J:20,K:21,L:23,M:24,N:25,O:26,P:27,Q:28,R:29,S:30,T:31,U:32,V:34,W:35,X:36,Y:37,Z:38};
+  window.validateISO6346=function(v){
+    const c=String(v||'').trim().toUpperCase().replace(/[\s-]/g,'');
+    if(!c)return{empty:true,valid:true};
+    if(!/^[A-Z]{4}\d{7}$/.test(c))return{valid:false,msg:'Format: ABCD1234567'};
+    let s=0;for(let i=0;i<10;i++)s+=(i<4?isoMap[c[i]]:+c[i])*Math.pow(2,i);
+    const exp=(s%11)%10;return{valid:exp===+c[10],msg:exp===+c[10]?'✓ ISO Valid':'⚠️ Check Digit: '+exp};
+  };
+  function showISO(el){
+    if(!el||!el.id.startsWith('ctn-no-input-'))return;
+    let b=el.parentElement.querySelector('.iso-badge');const r=validateISO6346(el.value);
+    if(r.empty){if(b)b.remove();return;}
+    if(!b){b=document.createElement('div');el.parentElement.appendChild(b);}
+    b.className='iso-badge exclude-export '+(r.valid?'iso-valid':'iso-invalid');b.textContent=r.msg;
+  }
+  document.addEventListener('input',e=>{if(e.target&&e.target.id&&e.target.id.startsWith('ctn-no-input-')){e.target.value=e.target.value.toUpperCase();showISO(e.target);}});
+  window.checkAllISO=function(){
+    const n=parseInt(document.getElementById('noOfCtn')?.value)||1;let bad=[];
+    for(let i=1;i<=n;i++){const el=document.getElementById('ctn-no-input-'+i);if(el){showISO(el);const r=validateISO6346(el.value);if(!r.empty&&!r.valid)bad.push('Row '+i+': '+el.value+' ('+r.msg+')');}}
+    alert(bad.length?'⚠️ ပြန်စစ်ရန်:\n'+bad.join('\n'):'✅ Container No. အားလုံး ISO 6346 မှန်ကန်ပါသည်။');
+  };
+
+  // =========================================================================
+  // 4. Smart Auto-Complete (<datalist>)
+  // =========================================================================
+  const acFields=['shipper-input','buyer-input','commodity-input','packing-input','inspection-place-input','vessel-input','destination-input','inspector-input'];
+  function initAC(){
+    const h=safeParseJSON(localStorage.getItem('sgs_ac_hist'),{});
+    acFields.forEach(id=>{
+      const el=document.getElementById(id);if(!el)return;
+      let dl=document.getElementById('dl-'+id);
+      if(!dl){dl=document.createElement('datalist');dl.id='dl-'+id;document.body.appendChild(dl);el.setAttribute('list',dl.id);}
+      dl.innerHTML=(h[id]||[]).map(v=>`<option value="${String(v).replace(/"/g,'&quot;')}"></option>`).join('');
+    });
+  }
+  function saveAutoHistory(){
+    const h=safeParseJSON(localStorage.getItem('sgs_ac_hist'),{});
+    acFields.forEach(id=>{
+      const v=(document.getElementById(id)?.value||'').trim();
+      if(v.length>=2){const a=h[id]||[];if(!a.includes(v)){a.unshift(v);h[id]=a.slice(0,25);}}
+    });
+    localStorage.setItem('sgs_ac_hist',JSON.stringify(h));initAC();
+  }
+
+  // =========================================================================
+  // 5. Theme Switcher + Weight Tally Undo History
+  // =========================================================================
+  const themes=['normal','dark-mode','sunlight-mode'];let tIdx=Math.max(0,themes.indexOf(localStorage.getItem('sgs_theme')||'normal'));
+  function setTheme(t){document.body.classList.remove('dark-mode','sunlight-mode');if(t!=='normal')document.body.classList.add(t);localStorage.setItem('sgs_theme',t);const b=document.getElementById('nav-theme');if(b)b.textContent=t==='dark-mode'?'🌙 Dark':(t==='sunlight-mode'?'☀️ Sun':'🌓 Theme');}
+
+  let hist=[];
+  const origAdj=window.adjustCount;
+  if(typeof origAdj==='function'){
+    window.adjustCount=function(btn,amt,idx){
+      const cnt=btn.parentElement.querySelector('.count-input'),wt=btn.parentElement.querySelector('.wt-input'),prev=parseInt(cnt.value)||0;
+      origAdj(btn,amt,idx);const next=parseInt(cnt.value)||0;
+      if(prev!==next){
+        hist.push({idx,id:cnt.id,prev,next,wt:wt?wt.value:''});
+        const el=document.getElementById('proLastAct');
+        if(el)el.textContent=`Ctn ${idx} (${wt&&wt.value?wt.value:'?'} Kg): ${prev} ➔ ${next} Bags`;
+      }
+    };
+  }
+  window.undoTally=function(){
+    const h=hist.pop();if(!h)return alert('Undo လုပ်ရန် မရှိတော့ပါ');
+    const el=document.getElementById(h.id);
+    if(el){
+      el.value=h.prev||'';
+      updateContainer(h.idx);
+      saveToStorage();
+      const info=document.getElementById('proLastAct');
+      if(info)info.textContent=`Undo: Ctn ${h.idx} (${h.wt||'?'} Kg) ➔ ${h.prev} Bags`;
+    }
+  };
+
+  window.addEventListener('DOMContentLoaded',()=>{
+    ensureNoOfCtnOptions();
+    initAC();
+    // Restore SIR 10% Weighing Rows & Test Weight No from sgs_app_data_final
+    restoreSIRDataFromMainStorage();
+
+    const nav=document.getElementById('master-nav');
+    if(nav&&!document.getElementById('nav-theme')){const b=document.createElement('button');b.id='nav-theme';b.className='nav-btn exclude-export';b.onclick=()=>{tIdx=(tIdx+1)%3;setTheme(themes[tIdx]);};nav.appendChild(b);setTheme(themes[tIdx]);}
+    const cTab=document.getElementById('ctnTab');
+    if(cTab&&!document.getElementById('proCtnBar')){const d=document.createElement('div');d.id='proCtnBar';d.className='pro-bar exclude-export';d.innerHTML='<b>🛡️ ISO 6346 Check-Digit Validator</b><button class="pro-btn" onclick="checkAllISO()">✅ Check All ISO</button>';cTab.insertBefore(d,cTab.firstChild);}
+    const wTab=document.getElementById('weightTab');
+    if(wTab&&!document.getElementById('proWtBar')){const d=document.createElement('div');d.id='proWtBar';d.className='pro-bar exclude-export';d.innerHTML='<div><b>🕒 Last Action:</b> <span id="proLastAct">-</span></div><button class="pro-btn" style="background:#d35400" onclick="undoTally()">↩️ Undo</button>';wTab.insertBefore(d,wTab.firstChild);}
+    setTimeout(()=>{
+      const n=parseInt(document.getElementById('noOfCtn')?.value)||1;
+      for(let i=1;i<=n;i++){const el=document.getElementById('ctn-no-input-'+i);if(el)showISO(el);}
+    },300);
+  });
+})();
+</script>
+
 </body>
 </html>

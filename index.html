@@ -5497,5 +5497,268 @@
 })();
 </script>
 
+<!-- START_sn-custom-autocomplete-upgrade-v1 -->
+<style id="sn-custom-autocomplete-upgrade-v1-style">
+  .sn-ac-dropdown {
+    position: fixed;
+    max-height: 150px;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+    z-index: 999999;
+    display: none;
+    box-sizing: border-box;
+    overscroll-behavior: contain;
+  }
+  .sn-ac-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+    color: #1e293b;
+    background: #ffffff;
+    line-height: 1.4;
+    word-break: break-word;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .sn-ac-item:last-child {
+    border-bottom: none;
+  }
+  .sn-ac-item:hover, .sn-ac-item:active, .sn-ac-item.sn-ac-active {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+  }
+</style>
+<script id="sn-custom-autocomplete-upgrade-v1-script">
+(function() {
+  const MAX_ITEMS = 5;
+  const CONVERT_ALL_DATALISTS = true;
+  const TARGET_IDS = [
+    'shipper-input', 'buyer-input', 'inspection-place-input',
+    'commodity-input', 'packing-input', 'vessel-input',
+    'destination-input', 'inspector-input', 'marking-input',
+    'shipperInput', 'buyerInput', 'locationInput'
+  ];
+
+  let activeDropdown = null;
+  let activeInput = null;
+
+  function getOrCreateDropdown() {
+    if (!activeDropdown) {
+      activeDropdown = document.createElement('div');
+      activeDropdown.className = 'sn-ac-dropdown';
+      
+      // Prevent mousedown / touchstart inside dropdown from blurring input or closing prematurely
+      ['mousedown', 'touchstart', 'pointerdown', 'scroll', 'wheel'].forEach(evtName => {
+        activeDropdown.addEventListener(evtName, (e) => {
+          e.stopPropagation();
+        });
+      });
+
+      document.body.appendChild(activeDropdown);
+    }
+    return activeDropdown;
+  }
+
+  function positionDropdown(input, dropdown) {
+    const rect = input.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    
+    dropdown.style.width = Math.max(rect.width, 200) + 'px';
+    dropdown.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)) + 'px';
+
+    if (spaceBelow < 160 && spaceAbove > spaceBelow) {
+      dropdown.style.maxHeight = Math.min(150, spaceAbove - 10) + 'px';
+      dropdown.style.top = Math.max(8, rect.top - dropdown.offsetHeight - 3) + 'px';
+    } else {
+      dropdown.style.maxHeight = 150 + 'px';
+      dropdown.style.top = (rect.bottom + 3) + 'px';
+    }
+  }
+
+  function hideDropdown() {
+    if (activeDropdown) {
+      activeDropdown.style.display = 'none';
+      activeDropdown.innerHTML = '';
+    }
+    activeInput = null;
+  }
+
+  function collectSuggestionsForInput(input) {
+    const items = new Set();
+
+    const listId = input.getAttribute('data-sn-list') || input.getAttribute('list');
+    if (listId) {
+      const dl = document.getElementById(listId);
+      if (dl) {
+        dl.querySelectorAll('option').forEach(opt => {
+          const v = (opt.value || opt.textContent || '').trim();
+          if (v) items.add(v);
+        });
+      }
+    }
+
+    const idLower = (input.id || input.name || '').toLowerCase();
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        const kLower = k.toLowerCase();
+        if (
+          (idLower.includes('shipper') && kLower.includes('shipper')) ||
+          (idLower.includes('buyer') && kLower.includes('buyer')) ||
+          ((idLower.includes('place') || idLower.includes('location')) && (kLower.includes('place') || kLower.includes('location'))) ||
+          (idLower && kLower.includes(idLower.replace('-input', '')))
+        ) {
+          const raw = localStorage.getItem(k);
+          if (raw && raw.startsWith('[')) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              parsed.forEach(v => {
+                if (typeof v === 'string' && v.trim()) items.add(v.trim());
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {}
+
+    return Array.from(items);
+  }
+
+  function renderSuggestions(input) {
+    const val = (input.value || '').trim().toLowerCase();
+    const dropdown = getOrCreateDropdown();
+
+    if (!val) {
+      hideDropdown();
+      return;
+    }
+
+    const allItems = collectSuggestionsForInput(input);
+    const matches = allItems
+      .filter(item => item && item.toLowerCase().includes(val) && item.toLowerCase() !== val)
+      .slice(0, MAX_ITEMS);
+
+    if (matches.length === 0) {
+      hideDropdown();
+      return;
+    }
+
+    dropdown.innerHTML = '';
+    matches.forEach(match => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'sn-ac-item';
+      itemDiv.textContent = match;
+
+      // Use explicit click event only so touching/scrolling doesn't auto-select accidentally
+      const selectHandler = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        input.value = match;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        hideDropdown();
+      };
+
+      itemDiv.addEventListener('click', selectHandler);
+      dropdown.appendChild(itemDiv);
+    });
+
+    activeInput = input;
+    dropdown.style.display = 'block';
+    positionDropdown(input, dropdown);
+  }
+
+  function bindInput(input) {
+    if (!input || input.dataset.snUpgraded === '1') return;
+
+    const origList = input.getAttribute('list');
+    if (origList) {
+      input.setAttribute('data-sn-list', origList);
+      input.removeAttribute('list');
+    }
+    input.setAttribute('autocomplete', 'off');
+    input.dataset.snUpgraded = '1';
+
+    input.addEventListener('input', function() {
+      if (this.hasAttribute('list')) {
+        this.setAttribute('data-sn-list', this.getAttribute('list'));
+        this.removeAttribute('list');
+      }
+      renderSuggestions(this);
+    });
+
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === 'Tab') {
+        hideDropdown();
+      }
+    });
+
+    input.addEventListener('blur', function() {
+      setTimeout(() => {
+        const activeEl = document.activeElement;
+        if (activeDropdown && activeDropdown.contains(activeEl)) return;
+        if (activeInput === input) hideDropdown();
+      }, 300);
+    });
+  }
+
+  function scanAndUpgrade() {
+    TARGET_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) bindInput(el);
+    });
+
+    if (CONVERT_ALL_DATALISTS) {
+      document.querySelectorAll('input[list], input[data-sn-list]').forEach(el => {
+        bindInput(el);
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scanAndUpgrade);
+  } else {
+    scanAndUpgrade();
+  }
+
+  const observer = new MutationObserver(() => scanAndUpgrade());
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['list']
+  });
+
+  window.addEventListener('scroll', () => {
+    if (activeInput && activeDropdown && activeDropdown.style.display === 'block') {
+      positionDropdown(activeInput, activeDropdown);
+    }
+  }, true);
+
+  window.addEventListener('resize', () => {
+    if (activeInput && activeDropdown && activeDropdown.style.display === 'block') {
+      positionDropdown(activeInput, activeDropdown);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (activeInput && e.target !== activeInput && (!activeDropdown || !activeDropdown.contains(e.target))) {
+      hideDropdown();
+    }
+  });
+})();
+</script>
+<!-- END_sn-custom-autocomplete-upgrade-v1 -->
 </body>
 </html>

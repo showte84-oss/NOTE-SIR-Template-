@@ -179,60 +179,52 @@
         .btn-sync:hover { background-color: #218838; }
         .btn-sync:active { transform: scale(0.95); }
 
-        /* === Quick Paste Visual Refresh === */
-        .quick-paste-shell { max-width: 1060px; padding: 0; overflow: hidden; background: #f7faf8; border: 1px solid #dbe8df; box-shadow: 0 14px 38px rgba(27, 73, 50, 0.12); }
-        .quick-paste-hero { background: linear-gradient(135deg, #173e2a 0%, #2c6b4b 100%); color: #fff; padding: 28px 30px 24px; }
-        .quick-paste-title-row { display: flex; align-items: center; gap: 14px; }
-        .quick-paste-title-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,0.14); font-size: 22px; }
-        .quick-paste-hero h2 { color: #fff; border: 0; padding: 0; margin: 0; font-size: 24px; }
-        .quick-paste-hero p { margin: 7px 0 0; color: rgba(255,255,255,0.84); font-size: 13px; line-height: 1.55; }
-        .quick-paste-body { padding: 24px 30px 30px; }
-        .quick-paste-card { background: #fff; border: 1px solid #dbe8df; border-radius: 14px; padding: 20px; box-shadow: 0 6px 18px rgba(24, 64, 43, 0.06); margin-bottom: 18px; }
-        .gem-guide-card { background: linear-gradient(135deg, #f7f1ff 0%, #fbf9ff 100%); border-color: #d9c8f5; }
-        .gem-guide-title { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; color: #532d91; font-size: 17px; }
-        .gem-guide-title span { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: #6f3cc3; color: #fff; }
-        .gem-guide-text { margin: 0 0 14px; color: #5f5a69; font-size: 13px; line-height: 1.6; }
-        .gem-open-link { display: inline-flex; align-items: center; gap: 7px; color: #fff; background: #6f3cc3; padding: 10px 13px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 800; box-shadow: 0 3px 0 #542b97; }
-        .gem-open-link:active { transform: translateY(2px); box-shadow: 0 1px 0 #542b97; }
-        .gem-prompt-row { display: flex; align-items: center; gap: 10px; margin-top: 15px; padding: 11px; border: 1px solid #e0d5f4; border-radius: 9px; background: #fff; }
-        .gem-prompt-row code { flex: 1; color: #3f2a63; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
-        .gem-copy-btn { flex: 0 0 auto; border: 0; border-radius: 7px; background: #2c5e43; color: #fff; padding: 9px 11px; cursor: pointer; font-size: 12px; font-weight: 800; }
-        .gem-copy-btn:active { transform: scale(.96); }
-        .quick-paste-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px; }
-        .quick-paste-toolbar-text { font-size: 13px; line-height: 1.45; color: #496255; }
-        .quick-paste-toolbar-text b { color: #1a4c33; }
-        .quick-import-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto; min-width: 185px; padding: 11px 16px; border: 0; border-radius: 9px; background: #6f3cc3; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 0 #542b97; transition: transform .15s, box-shadow .15s; }
-        .quick-import-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #542b97; }
-        .quick-icon-clear { width: 40px; height: 40px; border: 1px solid #f1c9c9; border-radius: 9px; background: #fff5f5; color: #c0392b; font-size: 17px; cursor: pointer; transition: background .15s, transform .15s; }
-        .quick-icon-clear:hover { background: #ffe6e6; }
-        .quick-icon-clear:active { transform: scale(.93); }
-        .quick-paste-label { color: #214c35; font-weight: 800; font-size: 14px; display: block; margin: 3px 0 8px; }
-        #quickPasteInput { width: 100%; min-height: 180px; border: 1px dashed #91b5a0; border-radius: 10px; padding: 14px; box-sizing: border-box; background: #fbfefc; color: #24362b; line-height: 1.55; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; resize: vertical; }
-        #quickPasteInput:focus { outline: none; border-style: solid; border-color: #2c6b4b; box-shadow: 0 0 0 3px rgba(44, 107, 75, 0.13); }
-        .quick-preview-btn { margin-top: 12px; width: auto; min-width: 190px; padding: 12px 18px; border-radius: 9px; background: #214f36; font-size: 14px; box-shadow: 0 4px 0 #163827; }
-        .quick-preview-btn:hover { background: #173e2a; }
-        #quickPasteStatus { min-height: 20px; padding-top: 11px; font-size: 13px; }
-        .quick-preview-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px; }
-        .quick-preview-head h3 { margin: 0; border: 0; padding: 0; color: #1d4d35; font-size: 18px; }
-        .quick-preview-head p { margin: 4px 0 0; color: #64776b; font-size: 12px; }
-        .quick-add-row { width: auto; padding: 9px 12px; border-radius: 8px; font-weight: 700; }
-        #quickPastePreviewCard .ctn-table th { background: #e6f2e9; color: #1d4d35; border-color: #c8dfce; }
-        #quickPastePreviewCard .ctn-table td { border-color: #d5e4d8; }
-        #quickPastePreviewCard .ctn-table tr:nth-child(even) td { background: #fbfefc; }
-        .quick-sync-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
-        .quick-sync-actions .btn-main { flex: 1; min-width: 220px; width: auto; padding: 13px 16px; border-radius: 9px; font-size: 14px; }
+        /* === Auto Generator === */
+        #master-nav { flex-wrap: wrap; }
+        .ag-shell { max-width: 1060px; padding: 0; overflow: hidden; background: #f7faf8; border: 1px solid #dbe8df; box-shadow: 0 14px 38px rgba(27,73,50,.12); }
+        .ag-hero { display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg,#173e2a 0%,#2c6b4b 100%); color: #fff; padding: 26px 30px; }
+        .ag-hero-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,.14); font-size: 22px; flex: 0 0 auto; }
+        .ag-hero h2 { color: #fff; border: 0; padding: 0; margin: 0; font-size: 24px; }
+        .ag-hero p { margin: 6px 0 0; color: rgba(255,255,255,.85); font-size: 13px; line-height: 1.55; }
+        .ag-body { padding: 22px 30px 30px; }
+        .ag-card { background: #fff; border: 1px solid #dbe8df; border-radius: 14px; padding: 18px; box-shadow: 0 6px 18px rgba(24,64,43,.06); margin-bottom: 18px; }
+        .ag-acc { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #eef5f0; border: 1px solid #c8d6cf; border-radius: 9px; padding: 12px 14px; font-size: 14px; font-weight: 800; color: #1d4d35; cursor: pointer; text-align: left; font-family: inherit; }
+        .ag-help { font-size: 13px; color: #496255; line-height: 1.6; margin: 14px 0 10px; }
+        .ag-prompt-wrap { position: relative; }
+        #agPromptText { width: 100%; height: 220px; padding: 12px; box-sizing: border-box; background: #0f1d16; color: #6ee7b7; border: 0; border-radius: 10px; font-family: ui-monospace,Menlo,Consolas,monospace; font-size: 12px; resize: vertical; }
+        .ag-copy { position: absolute; top: 10px; right: 22px; border: 0; border-radius: 7px; background: #2c5e43; color: #fff; padding: 8px 11px; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .ag-title { margin: 0 0 14px; border: 0; padding: 0; color: #1d4d35; font-size: 17px; }
+        .ag-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        @media (min-width: 760px) { .ag-grid { grid-template-columns: 1fr 2fr; } }
+        .ag-tpl { background: #f4f8f5; border: 1px solid #dbe8df; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .ag-tpl label, .ag-grid label, .ag-name label { font-weight: 800; font-size: 13px; color: #214c35; }
+        .ag-tpl .ag-small { font-size: 12px; color: #6b7f73; font-weight: 600; }
+        .ag-ok { margin: 0; font-size: 12px; color: #1e7e4a; font-weight: 700; line-height: 1.5; }
+        .ag-tpl input[type=file] { font-size: 12px; padding: 4px; border: 0; background: transparent; }
+        .ag-row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+        .ag-clear { border: 1px solid #f1c9c9; background: #fff5f5; color: #c0392b; border-radius: 7px; padding: 6px 10px; font-size: 12px; font-weight: 800; cursor: pointer; }
+        #agJsonInput { width: 100%; min-height: 190px; box-sizing: border-box; border: 1px dashed #91b5a0; border-radius: 10px; padding: 12px; background: #fbfefc; font-family: ui-monospace,Menlo,Consolas,monospace; font-size: 13px; resize: vertical; }
+        #agJsonInput:focus { outline: none; border-style: solid; border-color: #2c6b4b; box-shadow: 0 0 0 3px rgba(44,107,75,.13); }
+        .ag-action { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-top: 18px; background: #eef5f0; border: 1px solid #c8dfce; border-radius: 12px; padding: 14px; }
+        .ag-name { flex: 1 1 280px; display: flex; flex-direction: column; gap: 6px; }
+        .ag-name-row { display: flex; }
+        .ag-name-row input { border-radius: 8px 0 0 8px !important; font-weight: 700; }
+        .ag-name-row span { background: #dfe8e2; border: 1px solid #ccc; border-left: 0; border-radius: 0 8px 8px 0; padding: 8px 12px; font-family: monospace; font-weight: 800; color: #444; }
+        .ag-generate { flex: 0 0 auto; width: auto; min-width: 200px; padding: 12px 20px; font-size: 15px; background: #214f36; border-radius: 9px; }
+        .ag-generate:hover { background: #173e2a; }
+        .ag-generate:disabled { opacity: .65; cursor: wait; }
+        .ag-status { margin-top: 14px; padding: 12px 14px; border-radius: 9px; font-size: 13px; font-weight: 700; line-height: 1.5; white-space: pre-wrap; }
+        .ag-status.ok { background: #d9f2e3; color: #14683a; }
+        .ag-status.err { background: #fbdcdc; color: #a12828; }
+        body.dark-mode .ag-shell, body.dark-mode .ag-card { background: #1c2621 !important; border-color: #2f4238 !important; }
+        body.dark-mode .ag-tpl, body.dark-mode .ag-action, body.dark-mode .ag-acc { background: #24312b !important; color: #e2ece7 !important; border-color: #3d5448 !important; }
         @media (max-width: 640px) {
             #master-nav { gap: 5px; padding: 8px 5px; }
             .nav-btn { padding: 8px 8px; font-size: 11px; }
-            .quick-paste-body { padding: 16px; }
-            .quick-paste-hero { padding: 20px 18px; }
-            .quick-paste-toolbar { align-items: flex-start; }
-            .quick-import-btn { min-width: 0; padding: 10px 12px; }
-            .quick-paste-toolbar-text { font-size: 12px; }
-            .gem-prompt-row { align-items: stretch; flex-direction: column; }
-            .gem-copy-btn { width: 100%; }
+            .ag-body { padding: 14px; }
+            .ag-hero { padding: 18px; }
+            .ag-generate { width: 100%; }
         }
-
     </style>
 </head>
 <body>
@@ -241,7 +233,7 @@
     <div id="master-nav" role="navigation" aria-label="အက်ပ်ရွေးချယ်ရန်">
         <button type="button" id="nav-sgs" class="nav-btn active" aria-pressed="true" aria-controls="sgs-app" onclick="switchApp('sgs')">📝 SGS Surveyor Notes</button>
         <button type="button" id="nav-sir" class="nav-btn" aria-pressed="false" aria-controls="sir-app" onclick="switchApp('sir')">🚀 SIR Template Generator</button>
-        <button type="button" id="nav-quick-paste" class="nav-btn" aria-pressed="false" aria-controls="quick-paste-app" onclick="switchApp('quick-paste')">⚡ Quick Paste</button>
+        <button type="button" id="nav-auto-gen" class="nav-btn" aria-pressed="false" aria-controls="auto-gen-app" onclick="switchApp('auto-gen')">⚡ Auto Generator</button>
     </div>
 
     <!-- ========================================== -->
@@ -259,6 +251,7 @@
                         <button type="button" class="menu-item" onclick="saveJobToDB()"><i>💾</i> Save</button>
                         <button type="button" class="menu-item" onclick="saveAsJobToDB()"><i>📝</i> Save As</button>
                         <button type="button" class="menu-item" onclick="openLoadModal()"><i>📂</i> Load</button>
+                        <button type="button" class="menu-item" onclick="openLiveTeam()"><i>👥</i> Team Live</button>
                         <button type="button" class="menu-item" onclick="openSearchModal()"><i>🔍</i> Search</button>
                         <button type="button" class="menu-item" onclick="exportBackupFile()"><i>📥</i> Backup</button>
                         <button type="button" class="menu-item" onclick="document.getElementById('importBackupInput').click()"><i>📤</i> Restore</button>
@@ -538,64 +531,137 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- APP 3: QUICK PASTE                          -->
+    <!-- APP 3: AUTO GENERATOR                      -->
     <!-- ========================================== -->
-    <div id="quick-paste-app" class="app-wrapper" style="display:none;">
-        <div class="sir-container quick-paste-shell">
-            <div class="quick-paste-hero">
-                <div class="quick-paste-title-row">
-                    <div class="quick-paste-title-icon">⚡</div>
-                    <div>
-                        <h2>Quick Paste</h2>
-                        <p>Container Data ကို Paste လုပ်ခြင်း သို့မဟုတ် Excel/CSV မှ Import လုပ်ခြင်းဖြင့် SIR Template နှင့် Surveyor Notes သို့ မြန်မြန် Sync လုပ်ပါ။</p>
-                    </div>
+    <div id="auto-gen-app" class="app-wrapper" style="display:none;">
+        <div class="sir-container ag-shell">
+            <div class="ag-hero">
+                <div class="ag-hero-icon">⚡</div>
+                <div>
+                    <h2>Auto Generator</h2>
+                    <p>AI (Gemini / ChatGPT) မှ ရလာသော JSON Data ကို Paste ချပြီး SIR Report Excel ကို တိုက်ရိုက် ထုတ်ယူပါ။</p>
                 </div>
             </div>
+            <div class="ag-body">
+                <div class="ag-card">
+                    <button type="button" class="ag-acc" onclick="agTogglePrompt()" aria-expanded="false" aria-controls="agPromptSection">
+                        <span>📌 အဆင့် (၁) - AI တွင် ပုံများဖတ်ရန် Prompt ယူပါ</span><span id="agToggleIcon">▼</span>
+                    </button>
+                    <div id="agPromptSection" style="display:none;">
+                        <p class="ag-help">၁။ <b>Gemini Chat</b> သို့မဟုတ် <b>ChatGPT</b> တွင် SGS Report ပုံ (၅) ပုံကို တင်ပါ။<br>၂။ အောက်ပါ <b>Copy Prompt</b> ခလုတ်ကိုနှိပ်ပြီး AI သို့ ပေးပို့လိုက်ပါ။</p>
+                        <div class="ag-prompt-wrap">
+                            <textarea id="agPromptText" readonly>Read the attached SGS inspection report images (Stuffing Report, Weight List, Tally Form, VGM Field Report, and Container Survey Report) and extract all data into the following exact JSON format. Return ONLY valid JSON inside a ```json ``` codeblock without any extra text.
 
-            <div class="quick-paste-body">
-                <div class="quick-paste-card gem-guide-card">
-                    <h3 class="gem-guide-title"><span>✦</span>Gemini Gem နဲ့ Container Report Photo ဖတ်ရန်</h3>
-                    <p class="gem-guide-text">အောက်က Gem ကိုဖွင့်ပါ၊ Container Report Photo ကိုတင်ပါ၊ ပြီးလျှင် Prompt စာသားကို Copy ကူးပြီး Gemini chat ထဲမှာ Paste လုပ်ပါ။ ထွက်လာသော Quick Paste data ကို ဒီ Tab ရဲ့ Paste box ထဲသို့ ပြန်ကူးထည့်နိုင်ပါတယ်။</p>
-                    <a class="gem-open-link" href="https://gemini.google.com/gem/121zjKsSgbvJBFVyklSlKanCgY_yOoTrb?usp=sharing" target="_blank" rel="noopener noreferrer">↗ Open Container Report Gem</a>
-                    <div class="gem-prompt-row">
-                        <code>Extract this report in Quick Paste format</code>
-                        <button type="button" class="gem-copy-btn" onclick="copyGemExtractionPrompt()">📋 Copy Prompt</button>
-                    </div>
-                </div>
-                <div class="quick-paste-card">
-                    <div class="quick-paste-toolbar">
-                        <div class="quick-paste-toolbar-text"><b>Excel / CSV Import</b><br>Workbook ရှိ Container Stuffing၊ Report Details နှင့် Calibration Report Sheet များကို သက်ဆိုင်ရာနေရာသို့ ချိတ်ဆက်ပေးပါမည်။</div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <input type="file" id="quickPasteExcelInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="importQuickPasteExcel(event)">
-                            <button type="button" class="quick-import-btn" onclick="document.getElementById('quickPasteExcelInput').click()">📥 Import Excel File</button>
-                            <button type="button" class="quick-icon-clear" onclick="clearQuickPaste()" aria-label="Clear Quick Paste data" title="Clear">🗑️</button>
+{
+  "job_ref": "2108339",
+  "date": "14/10/2026",
+  "start_time": "08:30",
+  "shipper": "Yangon Agri Food",
+  "buyer": "Kalp Impex",
+  "commodity": "Black Eye Beans (BEB)",
+  "quantity": "48 MTS (1920 Bags)",
+  "packing": "New Single pp Bag",
+  "poi": "No. 122, HTY.1",
+  "survey_location": "No. 122, HTY.1",
+  "vessel": "MV As Susanna",
+  "destination": "Valencia, Spain",
+  "inspector_names": "Kyaw Nyunt, Myint Ko Ko",
+  "test_weight": "10 Kgs",
+  "test_weight_no": "014",
+  "weighing_percent": 0.1,
+  "per_bag_gross": 25.05,
+  "per_bag_tare": 0.05,
+  "additional_bags": null,
+  "weighing_data": [
+    {"page": 1, "bags": 192, "gross_weight": 4809.6}
+  ],
+  "vgm_completed_date": "14/10/2026",
+  "vgm_other_headers": ["SGS SEAL", "SECCO", "PAPER"],
+  "containers": [
+    {
+      "no": "CAIU 6562141",
+      "condition": "Sound",
+      "commence": "08:30",
+      "complete": "10:00",
+      "bags": 960,
+      "gross_mt": 24.048,
+      "tare_mt": 0.048,
+      "seal": "444072",
+      "slings": [100, 100, 100, 100, 100, 100, 100, 100, 100, 60],
+      "tally_additional_bags": null,
+      "vgm_per_bag_gross": 50.12,
+      "vgm_others": [0.012, 4.0, 10.0],
+      "ctn_tare_kg": 2150,
+      "hole_dented": "No",
+      "floor_type": "Wood",
+      "floor_damaged": "No",
+      "free_odour": "Yes",
+      "free_infestation": "Yes",
+      "clean_dry": "Yes",
+      "color": "Red",
+      "size": "20'",
+      "type": "Steel",
+      "suitable": "Yes"
+    }
+  ]
+}
+
+Important Rules for Extraction:
+1. Container Number (`no`): Always format as 4 English letters, followed by a SINGLE SPACE, followed by the digits (e.g., if handwritten as "BMOU- 1657789" or "CSNU.2702460", output strictly as "BMOU 1657789" or "CSNU 2702460").
+2. Container Seal Number (`seal`): Seal numbers contain DIGITS ONLY (0-9). If a handwritten character looks like 'S', interpret it as '5'. If 'O', interpret as '0'. If 'I' or 'l', interpret as '1'. If 'B', interpret as '8'. Output digits only.
+3. Additional Kgs / Bags (`additional_bags` & `tally_additional_bags`): Extract the exact number written in 'Additional Bags :' (Kgs) from the Weight List (Summary) image into `additional_bags`. If Tally Form has additional bags per container, put in `tally_additional_bags`. If blank or '-', set to `null`.
+4. Format Date as DD/MM/YYYY.
+5. Survey fields (hole_dented, floor_type, color, type, etc.) must be in Title Case (First letter Capitalized, e.g., "No", "Wood", "Yes", "Red", "Blue", "Steel").
+6. `slings` array can have up to 10 numbers representing each sling column in Tally Form.
+7. `vgm_other_headers`: Extract EXACTLY as written under 'Other Packages (Kgs)' in the VGM image (e.g. "SGS SEAL"). DO NOT translate, change, or normalize to words like "Desiccant" or "Seal".
+8. `vgm_per_bag_gross` inside `containers`: Extract the "Per bag Gross Weight (kgs)" for EACH specific container row from the VGM image. Do not copy the first row's value to all rows.
+9. `vgm_completed_date`: Extract the inspection completed date EXACTLY as written in the VGM Field Report image.</textarea>
+                            <button type="button" id="agCopyBtn" class="ag-copy" onclick="agCopyPrompt()">📋 Copy Prompt</button>
                         </div>
                     </div>
-                    <label for="quickPasteInput" class="quick-paste-label">Container Data ကို ဒီနေရာတွင် Paste လုပ်ပါ</label>
-                    <textarea id="quickPasteInput" rows="10" placeholder="Container No&#9;Bags&#9;Gross MT&#9;Tare MT&#9;Ave Gross Wt&#9;Commenced&#9;Completed&#9;Seal No&#10;TRHU1250528&#9;500&#9;25.050&#9;0.050&#9;50.100&#9;08:30&#9;09:10&#9;439291"></textarea>
-                    <button type="button" class="btn-main quick-preview-btn" onclick="parseQuickPasteData()">Paste &amp; Preview</button>
-                    <button type="button" class="btn-main" style="background:#3498db; margin-top:10px;" onclick="fillQuickPasteToSIR(false)">🚀 Fill to SIR Template</button>
-                    <div id="quickPasteStatus"></div>
                 </div>
 
-                <div id="quickPastePreviewCard" class="quick-paste-card" style="display:none; overflow-x:auto;">
-                    <div class="quick-preview-head">
+                <div class="ag-card">
+                    <h3 class="ag-title">📌 အဆင့် (၂) - JSON Data ထည့်ပြီး Excel ထုတ်ယူပါ</h3>
+                    <div class="ag-grid">
+                        <div class="ag-tpl">
+                            <label>📄 Excel Template</label>
+                            <p class="ag-ok">✅ Built-in (40 FCL) SIR Template ကို အသုံးပြုပါမည် (SIR Template Generator နှင့် တူညီသော Template)။</p>
+                            <label for="agTemplateUpload" class="ag-small">လိုအပ်မှသာ ကိုယ်ပိုင် Template တင်ပါ -</label>
+                            <input type="file" id="agTemplateUpload" accept=".xlsx">
+                        </div>
                         <div>
-                            <h3>Preview &amp; Edit</h3>
-                            <p>Sync မလုပ်ခင် Row/Column data များကို တိုက်ရိုက်ပြင်ဆင်နိုင်ပါသည်။</p>
+                            <div class="ag-row-between">
+                                <label for="agJsonInput">📝 AI မှ ရရှိလာသော JSON Code ကို Paste ချပါ -</label>
+                                <button type="button" class="ag-clear" onclick="agClearJson()">🗑️ Clear Data</button>
+                            </div>
+                            <textarea id="agJsonInput" rows="9" oninput="agAutoFillFileName()" placeholder='{
+  "job_ref": "2108339",
+  ...
+}'></textarea>
                         </div>
-                        <button type="button" class="btn-small quick-add-row" style="background:#28a745;" onclick="addQuickPasteRow()">➕ Add Row</button>
                     </div>
-                <table class="ctn-table" style="min-width:740px;">
-                    <thead><tr><th>No.</th><th>Container No</th><th>Bags</th><th>Gross MT</th><th>Tare MT</th><th>Ave Gross Wt</th><th>Commenced</th><th>Completed</th><th>Seal No</th><th>🗑️</th></tr></thead>
-                    <tbody id="quickPastePreviewBody"></tbody>
-                </table>
-                    <div class="quick-sync-actions">
-                        <button type="button" class="btn-main" style="background:#3498db;" onclick="fillQuickPasteToSIR(false)">🚀 Fill to SIR Template</button>
-                        <button type="button" class="btn-main" style="background:#2C5E43;" onclick="fillQuickPasteToSIR(true)">📝 Fill &amp; Open Surveyor Notes</button>
+                    <div class="ag-action">
+                        <div class="ag-name">
+                            <label for="agFileName">✏️ File Name (JSON ထည့်လိုက်လျှင် Auto ပေါ်ပါမည်၊ ပြင်လို့ရပါသည်)</label>
+                            <div class="ag-name-row"><input type="text" id="agFileName" value="SIR JOB NO" oninput="agUserEditedName = true"><span>.xlsx</span></div>
+                        </div>
+                        <button type="button" id="agGenerateBtn" class="btn-main ag-generate" onclick="agProcessExcel()">🚀 Generate Excel</button>
                     </div>
+                    <div id="agStatusMsg" class="ag-status" style="display:none;"></div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- TEAM LIVE MODAL -->
+    <div class="modal-overlay" id="liveTeamModal" style="z-index:1000000;">
+        <div class="modal-content" style="max-width:500px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); margin-bottom:12px; padding-bottom:5px;">
+                <h2 style="margin:0; color:var(--primary);">👥 Team Live</h2>
+                <button type="button" onclick="closeLiveTeam()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#333;">❌</button>
+            </div>
+            <div id="liveTeamBody"></div>
         </div>
     </div>
 
@@ -687,13 +753,13 @@
             if (document.getElementById('sir-app').style.display !== 'none') saveSIRFormState();
             document.getElementById('sgs-app').style.display = app === 'sgs' ? 'block' : 'none';
             document.getElementById('sir-app').style.display = app === 'sir' ? 'block' : 'none';
-            document.getElementById('quick-paste-app').style.display = app === 'quick-paste' ? 'block' : 'none';
+            document.getElementById('auto-gen-app').style.display = app === 'auto-gen' ? 'block' : 'none';
             document.getElementById('nav-sgs').classList.toggle('active', app === 'sgs');
             document.getElementById('nav-sir').classList.toggle('active', app === 'sir');
-            document.getElementById('nav-quick-paste').classList.toggle('active', app === 'quick-paste');
+            document.getElementById('nav-auto-gen').classList.toggle('active', app === 'auto-gen');
             document.getElementById('nav-sgs').setAttribute('aria-pressed', String(app === 'sgs'));
             document.getElementById('nav-sir').setAttribute('aria-pressed', String(app === 'sir'));
-            document.getElementById('nav-quick-paste').setAttribute('aria-pressed', String(app === 'quick-paste'));
+            document.getElementById('nav-auto-gen').setAttribute('aria-pressed', String(app === 'auto-gen'));
 
             if(app === 'sir') {
                 // Surveyor Notes is the source of truth for the shared report data.
@@ -4461,541 +4527,268 @@
         }
 
         // ===============================================
-        // QUICK PASTE — BATCH CONTAINER ENTRY
+        // AUTO GENERATOR (AI JSON -> SIR Excel)
         // ===============================================
-        let quickPasteRows = [];
-        let quickPasteImportedMeta = {};
-        let quickPasteLastParsedText = '';
-        // Label aliases for the General Information lines accepted in Quick Paste ("Label: value").
-        const QUICK_PASTE_META_FIELDS = {
-            jobRef: ['Job Ref', 'Job Reference', 'Job No', 'Job Number'],
-            departureTime: ['Departure Time', 'Departure from the office to loading point (Time)'],
-            departureDate: ['Departure Date'],
-            arrivalTime: ['Arrival Time', 'Arrival (Time)'],
-            arrivalDate: ['Arrival Date'],
-            shipper: ['Shipper'],
-            buyer: ['Buyer'],
-            commodity: ['Commodity'],
-            quantity: ['Quantity', 'Qty'],
-            packing: ['Packing'],
-            placeInsp: ['Place of Inspection', 'Inspection Place'],
-            vessel: ['Vessel'],
-            destination: ['Destination'],
-            inspector: ['Inspector Name', 'Inspector'],
-            testWeightNo: ['Test Weight No', 'Test weight No.'],
-            testWeight: ['Test Weight'],
-            marking: ['Marking', 'Marks']
-        };
+        let agUserEditedName = false;
 
-        const QUICK_PASTE_TEMPLATE = [
-            'Container No\tBags\tGross MT\tTare MT\tAve Gross Wt\tCommenced\tCompleted\tSeal No',
-            'TRHU1250528\t500\t25.050\t0.050\t50.100\t08:30\t09:10\t439291',
-            'TRHU1288204\t500\t25.050\t0.050\t50.100\t08:30\t09:20\t439292'
-        ].join('\n');
-
-        function copyQuickPasteTemplate() {
-            copyQuickPasteText(QUICK_PASTE_TEMPLATE, '✅ Paste Template ကို Copy ကူးပြီးပါပြီ။');
+        function agTogglePrompt() {
+            const sec = document.getElementById('agPromptSection');
+            const icon = document.getElementById('agToggleIcon');
+            const open = sec.style.display === 'none';
+            sec.style.display = open ? 'block' : 'none';
+            icon.innerText = open ? '▲' : '▼';
+            const btn = document.querySelector('.ag-acc');
+            if (btn) btn.setAttribute('aria-expanded', String(open));
         }
 
-        function copyQuickPasteText(text, successMessage) {
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(() => alert(successMessage)).catch(() => fallbackCopyQuickPaste(text, successMessage));
-            } else {
-                fallbackCopyQuickPaste(text, successMessage);
-            }
+        function agCopyPrompt() {
+            const ta = document.getElementById('agPromptText');
+            const btn = document.getElementById('agCopyBtn');
+            const done = () => { btn.innerText = '✅ Copied!'; setTimeout(() => btn.innerText = '📋 Copy Prompt', 2000); };
+            ta.select(); ta.setSelectionRange(0, 99999);
+            try { if (document.execCommand('copy')) { done(); return; } } catch (e) {}
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(ta.value).then(done).catch(() => alert('⚠️ Copy ကူးခွင့် ပိတ်ထားပါသည်။ စာသားကို ဖိ၍ Manual Copy ကူးယူပါ။'));
+            } else alert('⚠️ Copy ကူးခွင့် ပိတ်ထားပါသည်။ စာသားကို ဖိ၍ Manual Copy ကူးယူပါ။');
         }
 
-        function copyGemExtractionPrompt() {
-            copyQuickPasteText('Extract this report in Quick Paste format', '✅ Prompt copied. Gemini Gem ထဲမှာ Paste လုပ်ပါ။');
+        function agClearJson() {
+            document.getElementById('agJsonInput').value = '';
+            document.getElementById('agFileName').value = 'SIR JOB NO';
+            document.getElementById('agStatusMsg').style.display = 'none';
+            agUserEditedName = false;
         }
 
-        function fallbackCopyQuickPaste(text, successMessage) {
-            const helper = document.createElement('textarea');
-            helper.value = text;
-            helper.style.position = 'fixed';
-            helper.style.opacity = '0';
-            document.body.appendChild(helper);
-            helper.select();
-            document.execCommand('copy');
-            helper.remove();
-            alert(successMessage);
+        function agShowStatus(msg, isError = false) {
+            const el = document.getElementById('agStatusMsg');
+            el.className = 'ag-status ' + (isError ? 'err' : 'ok');
+            el.textContent = msg;
+            el.style.display = 'block';
         }
 
-        function loadQuickPasteSample() {
-            document.getElementById('quickPasteInput').value = QUICK_PASTE_TEMPLATE;
-            parseQuickPasteData();
-        }
-
-        function clearQuickPaste() {
-            if (!confirm('Quick Paste data ကို အားလုံးဖျက်မှာ သေချာပါသလား?')) return;
-            quickPasteRows = [];
-            quickPasteImportedMeta = {};
-            quickPasteLastParsedText = '';
-            document.getElementById('quickPasteInput').value = '';
-            document.getElementById('quickPastePreviewBody').innerHTML = '';
-            document.getElementById('quickPastePreviewCard').style.display = 'none';
-            document.getElementById('quickPasteStatus').textContent = '';
-        }
-
-        function splitQuickPasteLine(line, delimiter) {
-            if (delimiter === '\t') return line.split('\t').map(value => value.trim());
-            const values = [];
-            let value = '';
-            let quoted = false;
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                if (char === '"') {
-                    if (quoted && line[i + 1] === '"') { value += '"'; i++; }
-                    else quoted = !quoted;
-                } else if (char === delimiter && !quoted) {
-                    values.push(value.trim());
-                    value = '';
-                } else value += char;
-            }
-            values.push(value.trim());
-            return values;
-        }
-
-        function normaliseQuickPasteHeader(value) {
-            return String(value || '').toLowerCase().replace(/[._;:()-]/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-
-        function getQuickPasteField(header) {
-            const h = normaliseQuickPasteHeader(header);
-            // "Container Seal Number" also contains Container/Number, so test Seal first.
-            if (/seal/.test(h)) return 'seal';
-            if (/average|avg|ave/.test(h) && /(gross|weight|wt)/.test(h)) return 'aveGross';
-            if (/gross/.test(h) && /(mt|metric|weight|wt)/.test(h)) return 'gross';
-            if (/tare/.test(h) && /(mt|metric|weight|wt)/.test(h)) return 'tare';
-            if (/container|ctn/.test(h) && /(no|number|#)/.test(h)) return 'ctn';
-            // A title exactly named "Container" is ambiguous; do not map it to Container No.
-            if (/bag/.test(h)) return 'bags';
-            if (/commence|commenced|start/.test(h)) return 'commenced';
-            if (/complete|completed|finish|end/.test(h)) return 'completed';
-            return null;
-        }
-
-        function normaliseQuickPasteTime(value) {
-            let time = String(value || '').trim().replace(/\./g, ':').replace(/\s*(hrs?|am|pm)\s*$/i, '').replace(/:+$/, '');
-            if (!time) return '';
-            if (/^\d{3,4}$/.test(time)) {
-                time = time.length === 3 ? `0${time[0]}:${time.slice(1)}` : `${time.slice(0, 2)}:${time.slice(2)}`;
-            }
-            const match = time.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
-            if (!match) return time;
-            const hours = String(Math.min(23, parseInt(match[1], 10) || 0)).padStart(2, '0');
-            const minutes = String(Math.min(59, parseInt(match[2] || '0', 10) || 0)).padStart(2, '0');
-            return `${hours}:${minutes}`;
-        }
-
-                function quickPasteEscapeRegExp(value) {
-            return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        }
-
-        function quickPasteExtractMetaLine(line) {
-            const source = String(line || '').trim();
-            if (!source) return null;
-            const normalised = normaliseQuickPasteHeader(source);
-            for (const [field, aliases] of Object.entries(QUICK_PASTE_META_FIELDS)) {
-                const alias = aliases.slice().sort((a, b) => b.length - a.length).find(candidate => {
-                    const key = normaliseQuickPasteHeader(candidate);
-                    return normalised === key || normalised.startsWith(`${key} `);
-                });
-                if (!alias) continue;
-                const aliasPattern = quickPasteEscapeRegExp(alias).replace(/\s+/g, '\\s*');
-                const valuePattern = new RegExp(`^\\s*${aliasPattern}\\s*(?::|=|\\t|-)?\\s*`, 'i');
-                const value = source.replace(valuePattern, '').trim();
-                if (value && normaliseQuickPasteHeader(value) !== normaliseQuickPasteHeader(alias)) {
-                    return { field, value };
+        function agAutoFillFileName() {
+            const raw = document.getElementById('agJsonInput').value;
+            const match = raw.match(/"job_ref"\s*:\s*"([^"]+)"/);
+            if (match && match[1]) {
+                const nameInput = document.getElementById('agFileName');
+                if (!agUserEditedName || nameInput.value.trim() === '' || nameInput.value.startsWith('SIR JOB NO')) {
+                    nameInput.value = `SIR JOB NO ${match[1].trim()}`;
                 }
             }
-            return null;
         }
 
-        function normaliseQuickPasteDate(value) {
-            const source = String(value || '').trim();
-            if (!source) return '';
-            const match = source.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);
-            if (!match) return source;
-            let year = match[3];
-            if (year.length === 2) year = `20${year}`;
-            return `${year.padStart(4, '0')}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+        function agToTitleCase(str) {
+            if (!str) return '';
+            return str.toString().toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         }
 
-        function parseQuickPasteData() {
-            const rawText = document.getElementById('quickPasteInput').value.replace(/\r/g, '').trim();
-            const status = document.getElementById('quickPasteStatus');
-            quickPasteRows = [];
-            quickPasteImportedMeta = {};
-            quickPasteLastParsedText = '';
-            document.getElementById('quickPastePreviewBody').replaceChildren();
-            document.getElementById('quickPastePreviewCard').style.display = 'none';
-            if (!rawText) {
-                status.style.color = '#e74c3c';
-                status.textContent = '⚠️ Paste လုပ်မည့် Data မရှိသေးပါ။';
-                return;
-            }
+        function agFormatContainerNo(str) {
+            if (!str) return '';
+            const cleaned = str.toString().toUpperCase().trim();
+            const match = cleaned.match(/^([A-Z]+)[^A-Z0-9]*([0-9]+)$/);
+            if (match) return `${match[1]} ${match[2]}`;
+            return cleaned.replace(/[^A-Z0-9]+/g, ' ').trim();
+        }
 
-            const rawLines = rawText.split('\n').filter(line => line.trim() !== '');
-            const tableLines = [];
-            quickPasteImportedMeta = {};
-            rawLines.forEach(line => {
-                const metaLine = quickPasteExtractMetaLine(line);
-                if (metaLine) {
-                    quickPasteImportedMeta[metaLine.field] = metaLine.value;
-                    return;
-                }
-                // Ignore descriptive/preamble lines that are not table rows.
-                if (line.includes('\t') || line.includes(',') || /container|ctn|bags|gross|tare|seal|commence|complete/i.test(line)) {
-                    tableLines.push(line);
-                }
-            });
+        function agCleanSealNo(str) {
+            if (str === null || str === undefined) return '';
+            const map = { 'S': '5', 's': '5', 'O': '0', 'o': '0', 'I': '1', 'l': '1', 'i': '1', 'B': '8', 'Z': '2', 'z': '2', 'G': '6', 'b': '6' };
+            const res = str.toString().split('').map(ch => map[ch] || ch).join('');
+            const digitsOnly = res.replace(/[^0-9]/g, '');
+            return digitsOnly || res.trim();
+        }
 
-            if (!tableLines.length) {
-                status.style.color = '#e74c3c';
-                status.textContent = '⚠️ Container Data မတွေ့ပါ။ General Information သာရှိနေပါသည်။';
-                return;
-            }
+        function agSetCellVal(ws, addr, val) {
+            const cell = ws.getCell(addr);
+            if (cell.isMerged && cell.master) cell.master.value = val;
+            else cell.value = val;
+        }
 
-            const sampleLine = tableLines.find(line => line.includes('\t') || line.includes(',')) || tableLines[0];
-            const delimiter = sampleLine.includes('\t') ? '\t' : ',';
-            const rows = tableLines.map(line => splitQuickPasteLine(line, delimiter));
-            const fieldsInFirstRow = rows[0].map(getQuickPasteField);
-            const hasHeader = fieldsInFirstRow.filter(Boolean).length >= 2;
-            const defaultFields = ['ctn', 'bags', 'gross', 'tare', 'aveGross', 'commenced', 'completed', 'seal'];
-            const columnMap = hasHeader ? fieldsInFirstRow : defaultFields;
-            const dataRows = hasHeader ? rows.slice(1) : rows;
+        function agParseJson(raw) {
+            let text = raw.trim();
+            // Accept ```json fenced output and any chatter around the JSON object.
+            const first = text.indexOf('{');
+            const last = text.lastIndexOf('}');
+            if (first === -1 || last === -1 || last < first) throw new Error('JSON object ({ ... }) မတွေ့ပါ');
+            return JSON.parse(text.slice(first, last + 1));
+        }
 
-            quickPasteRows = dataRows.map(cells => {
-                // Pasted rows sometimes carry stray empty cells (e.g. "15:\t\t443621"). Drop the
-                // right-most empty ones so later columns (Seal No) stay under the right header.
-                cells = cells.slice();
-                while (cells.length > columnMap.length) {
-                    let k = cells.lastIndexOf('');
-                    if (k < 0) break;
-                    cells.splice(k, 1);
-                }
-                const row = { ctn: '', bags: '', gross: '', tare: '', aveGross: '', commenced: '', completed: '', seal: '' };
-                cells.forEach((value, index) => {
-                    const field = columnMap[index];
-                    if (field) row[field] = value.trim();
+        async function agProcessExcel() {
+            const rawJson = document.getElementById('agJsonInput').value.trim();
+            if (!rawJson) { agShowStatus('⚠️ ကျေးဇူးပြု၍ JSON Data ကို အရင်ထည့်သွင်းပေးပါ။', true); return; }
+
+            let data;
+            try { data = agParseJson(rawJson); }
+            catch (err) { agShowStatus('❌ JSON Format မှားယွင်းနေပါသည်: ' + err.message, true); return; }
+
+            if (typeof ExcelJS === 'undefined') { agShowStatus('❌ ExcelJS library မရရှိပါ။ Internet ချိတ်ဆက်မှုကို စစ်ဆေးပါ။', true); return; }
+
+            const btn = document.getElementById('agGenerateBtn');
+            btn.disabled = true;
+            btn.innerText = '⏳ Generating Excel...';
+
+            try {
+                let arrayBuffer;
+                const fileInput = document.getElementById('agTemplateUpload');
+                if (fileInput.files.length > 0) arrayBuffer = await fileInput.files[0].arrayBuffer();
+                else arrayBuffer = await getTemplateFromDB(); // built-in 40 FCL template (or the one uploaded in SIR Template Generator)
+
+                const wb = new ExcelJS.Workbook();
+                await wb.xlsx.load(arrayBuffer);
+                wb.calcProperties.fullCalcOnLoad = true;
+
+                const jobRef = String(data.job_ref || '').trim();
+                const dateSlash = data.date || '';
+                const startTime = data.start_time || '';
+                const poi = data.poi || '';
+                const surveyLoc = data.survey_location || poi;
+                const testWeight = data.test_weight || '10 Kgs';
+                const testWeightNo = data.test_weight_no || '';
+                const weighingPercent = data.weighing_percent ?? 0.1;
+                const perBagGross = data.per_bag_gross || 0;
+                const perBagTare = data.per_bag_tare || 0;
+                const rawAdd = data.additional_bags ?? data.additional_kgs ?? null;
+                const additionalBags = (rawAdd !== undefined && rawAdd !== null && String(rawAdd).trim() !== '' && String(rawAdd).trim() !== '-') ? Number(rawAdd) : null;
+                const weighingData = data.weighing_data || [];
+                const vgmHeaders = data.vgm_other_headers || ['Seal', 'SECCO', 'Paper'];
+                const containers = (data.containers || []).slice(0, MAX_FCL);
+                const visibleCount = Math.max(10, containers.length);
+                const vgmCompletedDate = data.vgm_completed_date || dateSlash;
+                const vgmCompletedTime = containers.length > 0 ? (containers[containers.length - 1].complete || '') : '';
+
+                // 1. STUFFING REPORT
+                const wsStuff = wb.getWorksheet('STUFFING REPORT');
+                agSetCellVal(wsStuff, 'E5', jobRef);
+                agSetCellVal(wsStuff, 'F6', dateSlash);
+                agSetCellVal(wsStuff, 'F7', dateSlash);
+                agSetCellVal(wsStuff, 'E8', data.shipper || '');
+                agSetCellVal(wsStuff, 'E9', data.buyer || '');
+                agSetCellVal(wsStuff, 'E10', data.commodity || '');
+                agSetCellVal(wsStuff, 'E11', data.quantity || '');
+                agSetCellVal(wsStuff, 'E12', data.packing || '');
+                agSetCellVal(wsStuff, 'E13', poi);
+                agSetCellVal(wsStuff, 'E14', data.vessel || '');
+                agSetCellVal(wsStuff, 'E15', data.destination || '');
+                agSetCellVal(wsStuff, 'E16', data.inspector_names || '');
+
+                containers.forEach((c, i) => {
+                    const r = 21 + i;
+                    agSetCellVal(wsStuff, `B${r}`, agFormatContainerNo(c.no));
+                    agSetCellVal(wsStuff, `C${r}`, c.condition || 'SOUND');
+                    agSetCellVal(wsStuff, `D${r}`, c.commence || '');
+                    agSetCellVal(wsStuff, `E${r}`, c.complete || '');
+                    agSetCellVal(wsStuff, `F${r}`, c.bags || 0);
+                    agSetCellVal(wsStuff, `G${r}`, c.gross_mt || 0);
+                    agSetCellVal(wsStuff, `H${r}`, c.tare_mt || 0);
+                    agSetCellVal(wsStuff, `I${r}`, agCleanSealNo(c.seal));
                 });
-                row.commenced = normaliseQuickPasteTime(row.commenced);
-                row.completed = normaliseQuickPasteTime(row.completed);
-                row.ctn = row.ctn.replace(/\s/g, '').toUpperCase();
-                return row;
-            }).filter(row => row.ctn || Object.values(row).some(value => value !== ''));
+                for (let r = 21 + containers.length; r <= 60; r++) ['B','C','D','E','F','G','H','I'].forEach(col => agSetCellVal(wsStuff, `${col}${r}`, null));
+                for (let r = 21; r <= 60; r++) wsStuff.getRow(r).hidden = (r >= 21 + visibleCount);
+                agSetCellVal(wsStuff, 'C68', testWeight);
+                agSetCellVal(wsStuff, 'G68', testWeightNo);
 
-            if (quickPasteRows.length === 0 || !quickPasteRows.some(row => row.ctn)) {
-                status.style.color = '#e74c3c';
-                status.textContent = '⚠️ Container Number ပါသော Data မတွေ့ပါ။ Header format ကို စစ်ဆေးပြီး ပြန် Paste လုပ်ပါ။';
-                return;
-            }
-
-            quickPasteRows = quickPasteRows.filter(row => row.ctn).slice(0, MAX_FCL);
-            quickPasteLastParsedText = rawText;
-            const metaNotice = Object.keys(quickPasteImportedMeta).length ? ' General Information ပါ ဖတ်ပြီးပါပြီ။' : '';
-            if (quickPasteRows.length >= MAX_FCL) {
-                status.style.color = '#e67e22';
-                status.textContent = `⚠️ ပထမဆုံး ${MAX_FCL} Rows ကိုသာ Preview ပြထားပါသည်။${metaNotice}`;
-            } else {
-                status.style.color = '#28a745';
-                status.textContent = `✅ ${quickPasteRows.length} Container Row(s) ကို ဖတ်ယူပြီးပါပြီ။${metaNotice} Preview တွင် စစ်ဆေးပါ။`;
-            }
-            renderQuickPastePreview();
-        }
-
-        function escapeQuickPasteHtml(value) {
-            return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        }
-
-        function renderQuickPastePreview() {
-            const body = document.getElementById('quickPastePreviewBody');
-            body.innerHTML = quickPasteRows.map((row, index) => `
-                <tr>
-                    <td style="text-align:center; font-weight:bold;">${index + 1}</td>
-                    <td><input data-qp-row="${index}" data-qp-field="ctn" value="${escapeQuickPasteHtml(row.ctn)}" oninput="updateQuickPasteCell(this)"></td>
-                    <td><input data-qp-row="${index}" data-qp-field="bags" inputmode="numeric" value="${escapeQuickPasteHtml(row.bags)}" oninput="updateQuickPasteCell(this)"></td>
-                    <td><input data-qp-row="${index}" data-qp-field="gross" inputmode="decimal" value="${escapeQuickPasteHtml(row.gross)}" oninput="updateQuickPasteCell(this)"></td>
-                    <td><input data-qp-row="${index}" data-qp-field="tare" inputmode="decimal" value="${escapeQuickPasteHtml(row.tare)}" oninput="updateQuickPasteCell(this)"></td>
-                    <td><input data-qp-row="${index}" data-qp-field="aveGross" inputmode="decimal" value="${escapeQuickPasteHtml(row.aveGross)}" oninput="updateQuickPasteCell(this)"></td>
-                    <td><input type="time" data-qp-row="${index}" data-qp-field="commenced" value="${escapeQuickPasteHtml(row.commenced)}" oninput="updateQuickPasteCell(this)"></td>
-                    <td><input type="time" data-qp-row="${index}" data-qp-field="completed" value="${escapeQuickPasteHtml(row.completed)}" oninput="updateQuickPasteCell(this)"></td>
-                    <td><input data-qp-row="${index}" data-qp-field="seal" value="${escapeQuickPasteHtml(row.seal)}" oninput="updateQuickPasteCell(this)"></td>
-                    <td style="text-align:center;"><button type="button" class="btn-delete" style="width:28px; height:28px;" onclick="deleteQuickPasteRow(${index})">×</button></td>
-                </tr>
-            `).join('');
-            document.getElementById('quickPastePreviewCard').style.display = quickPasteRows.length ? 'block' : 'none';
-        }
-
-        function updateQuickPasteCell(input) {
-            const rowIndex = parseInt(input.dataset.qpRow, 10);
-            const field = input.dataset.qpField;
-            if (!quickPasteRows[rowIndex] || !field) return;
-            quickPasteRows[rowIndex][field] = input.value;
-        }
-
-        function addQuickPasteRow() {
-            quickPasteRows.push({ ctn: '', bags: '', gross: '', tare: '', aveGross: '', commenced: '', completed: '', seal: '' });
-            renderQuickPastePreview();
-        }
-
-        function deleteQuickPasteRow(index) {
-            quickPasteRows.splice(index, 1);
-            renderQuickPastePreview();
-        }
-
-        function fillQuickPasteToSIR(openSurveyorNotes) {
-            // Allow users to press Fill directly after pasting, without first pressing
-            // Paste & Preview. Parsing is synchronous and populates quickPasteRows.
-            const input = document.getElementById('quickPasteInput');
-            const currentSource = input ? input.value.replace(/\r/g, '').trim() : '';
-            if (currentSource && currentSource !== quickPasteLastParsedText) parseQuickPasteData();
-            const rows = quickPasteRows.filter(row => String(row.ctn || '').trim() !== '').slice(0, MAX_FCL);
-            if (!rows.length) {
-                alert('⚠️ Container No. ပါသော Row အနည်းဆုံး တစ်ခု ထည့်ပေးပါ။');
-                return;
-            }
-
-            // Build the SIR rows first. switchApp('sir') may restore an older SIR state,
-            // so Quick Paste values must be applied after the dynamic form is rebuilt.
-            const countSelect = document.getElementById('noOfCtn');
-            if (countSelect) {
-                countSelect.value = String(rows.length);
-                if (typeof generateDynamicContent === 'function') generateDynamicContent();
-            }
-            switchApp('sir');
-            applyQuickPasteImportedMeta();
-            const setColumn = (id, field) => {
-                const el = document.getElementById(id);
-                if (el) { el.value = rows.map(row => row[field] || '').join('\n'); el.dispatchEvent(new Event('input', { bubbles: true })); }
-            };
-            setColumn('col_ctn', 'ctn');
-            setColumn('col_bags', 'bags');
-            setColumn('col_gross', 'gross');
-            setColumn('col_tare', 'tare');
-            setColumn('col_ave_gross', 'aveGross');
-            setColumn('col_commence', 'commenced');
-            setColumn('col_complete', 'completed');
-            setColumn('col_seal', 'seal');
-            if (typeof autoPadTimeColumn === 'function') {
-                autoPadTimeColumn('col_commence');
-                autoPadTimeColumn('col_complete');
-            }
-            // Push everything back into Surveyor Notes too, so both sides hold the same data and a
-            // later Surveyor Notes -> SIR sync cannot overwrite the Quick Paste values.
-            if (typeof syncDataFromSIR === 'function') syncDataFromSIR();
-            // "7:00" -> "7:00 Hrs" to match the SIR Time fields
-            ['dep_time', 'arr_time'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el && /^\d{1,2}:\d{2}$/.test(el.value.trim())) el.value = el.value.trim() + ' Hrs';
-            });
-            saveSIRFormState();
-            scheduleCloudUpload();
-
-            alert(`✅ ${rows.length} Container Row(s) ကို SIR Template သို့ ဖြည့်သွင်းပြီးပါပြီ။`);
-            if (openSurveyorNotes) switchApp('sgs');
-        }
-
-        // ===============================================
-        // MULTI-SHEET EXCEL IMPORT (SGS Container Report)
-        // ===============================================
-        function quickPasteEmptyRow() {
-            return { ctn: '', bags: '', gross: '', tare: '', aveGross: '', commenced: '', completed: '', seal: '' };
-        }
-
-        function quickPasteSheetMatrix(sheet) {
-            return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, blankrows: false })
-                .map(row => row.map(cell => String(cell === undefined || cell === null ? '' : cell).trim()))
-                .filter(row => row.some(cell => cell !== ''));
-        }
-
-        function quickPasteFindHeaderRow(matrix) {
-            let best = { index: -1, map: [], score: 0 };
-            matrix.slice(0, 25).forEach((row, index) => {
-                const map = row.map(getQuickPasteField);
-                const score = map.filter(Boolean).length;
-                if (score > best.score) best = { index, map, score };
-            });
-            return best;
-        }
-
-        function quickPasteNormaliseKey(value) {
-            return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-
-        function quickPasteFindSheetByName(workbook, nameParts) {
-            const parts = Array.isArray(nameParts) ? nameParts : [nameParts];
-            return workbook.SheetNames.find(name => {
-                const normalisedName = quickPasteNormaliseKey(name);
-                return parts.some(part => normalisedName.includes(quickPasteNormaliseKey(part)));
-            });
-        }
-
-        function quickPasteReadKeyValueSheet(workbook, nameParts) {
-            const sheetName = quickPasteFindSheetByName(workbook, nameParts);
-            if (!sheetName) return {};
-            const matrix = quickPasteSheetMatrix(workbook.Sheets[sheetName]);
-            const values = {};
-            if (matrix.length >= 2) {
-                // Support a horizontal header/value format as well as traditional key/value rows.
-                matrix[0].forEach((header, index) => {
-                    const key = quickPasteNormaliseKey(header);
-                    const value = String(matrix[1][index] || '').trim();
-                    if (key && value) values[key] = value;
+                // 2. WEIGHT LIST (SUMMARY)
+                const wsWeight = wb.getWorksheet('WEIGHT LIST (SUMMARY)');
+                agSetCellVal(wsWeight, 'C8', weighingPercent);
+                weighingData.forEach((d, i) => {
+                    const r = 12 + i;
+                    if (r > 26) return;
+                    agSetCellVal(wsWeight, `A${r}`, d.page ?? (i + 1));
+                    agSetCellVal(wsWeight, `B${r}`, d.bags || 0);
+                    agSetCellVal(wsWeight, `C${r}`, d.gross_weight || 0);
+                    agSetCellVal(wsWeight, `D${r}`, 'kgs');
                 });
-            }
-            // Support label/value report layouts where a label is in any column and its value
-            // appears several columns to the right (for example, "Job Ref : ... 2106858").
-            matrix.forEach(row => {
-                row.forEach((cell, index) => {
-                    const key = quickPasteNormaliseKey(cell);
-                    const value = row.slice(index + 1).map(item => String(item || '').trim()).find(Boolean);
-                    if (key && value && !values[key]) values[key] = value;
+                for (let r = 12 + weighingData.length; r <= 26; r++) ['A','B','C','D'].forEach(col => agSetCellVal(wsWeight, `${col}${r}`, null));
+                agSetCellVal(wsWeight, 'G12', { formula: 'ROUND(C27/B27, 3)' });
+                agSetCellVal(wsWeight, 'G13', perBagTare);
+                agSetCellVal(wsWeight, 'G14', { formula: 'ROUND(G12-G13, 3)' });
+                agSetCellVal(wsWeight, 'G15', additionalBags);
+
+                // 3. TALLY FORM
+                const wsTally = wb.getWorksheet('TALLY FORM');
+                const slingCols = ['C','D','E','F','G','H','I','J','K','L'];
+                containers.forEach((c, i) => {
+                    const r = 11 + i, sRow = 21 + i;
+                    agSetCellVal(wsTally, `B${r}`, { formula: `'STUFFING REPORT'!B${sRow}` });
+                    const slings = c.slings || [];
+                    slingCols.forEach((col, idx) => agSetCellVal(wsTally, `${col}${r}`, idx < slings.length ? slings[idx] : null));
+                    agSetCellVal(wsTally, `M${r}`, { formula: `SUM(C${r}:L${r})` });
+                    const tAdd = (c.tally_additional_bags !== undefined && c.tally_additional_bags !== null && c.tally_additional_bags !== '') ? Number(c.tally_additional_bags) : null;
+                    agSetCellVal(wsTally, `N${r}`, tAdd);
                 });
-            });
-            return values;
-        }
+                for (let r = 11 + containers.length; r <= 50; r++) ['B', ...slingCols, 'M', 'N'].forEach(col => agSetCellVal(wsTally, `${col}${r}`, null));
+                for (let r = 11; r <= 50; r++) wsTally.getRow(r).hidden = (r >= 11 + visibleCount);
 
-        function quickPasteReadReportMeta(workbook) {
-            // Supported layouts include Report Details, Container Stuffing Report, and STUFFING REPORT.
-            const report = quickPasteReadKeyValueSheet(workbook, ['report details', 'container stuffing report', 'stuffing report']);
-            const calibration = quickPasteReadKeyValueSheet(workbook, 'calibration report');
-            return {
-                jobRef: report['job ref'] || '',
-                shipper: report['shipper'] || '',
-                buyer: report['buyer'] || '',
-                commodity: report['commodity'] || '',
-                quantity: report['quantity'] || '',
-                packing: report['packing'] || '',
-                placeInsp: report['place of inspection'] || '',
-                vessel: report['vessel'] || '',
-                destination: report['destination'] || '',
-                marking: report['marks'] || report['marking'] || report['marke'] || '',
-                testWeight: calibration['test weight'] || '',
-                testWeightNo: calibration['test weight no'] || calibration['kgs viss test weight no'] || ''
-            };
-        }
-
-        function quickPasteNumber(value) {
-            const number = parseFloat(String(value || '').replace(/,/g, ''));
-            return Number.isFinite(number) ? number : null;
-        }
-
-        function quickPasteReadContainerSheet(workbook) {
-            // Evaluate every sheet. A workbook may have a summary sheet named “Container Stuffing Report”
-            // while the actual container rows are stored in a separate “Container Details” sheet.
-            const candidates = workbook.SheetNames.map(name => {
-                const headerInfo = quickPasteFindHeaderRow(quickPasteSheetMatrix(workbook.Sheets[name]));
-                const normalisedName = quickPasteNormaliseKey(name);
-                const namePriority = normalisedName.includes('container details') ? 2 : (normalisedName.includes('container stuffing') ? 1 : 0);
-                return { name, headerInfo, namePriority };
-            }).filter(candidate => candidate.headerInfo.map.includes('ctn'));
-
-            candidates.sort((a, b) => (b.headerInfo.score - a.headerInfo.score) || (b.namePriority - a.namePriority));
-            const selected = candidates[0];
-            if (!selected || selected.headerInfo.score < 2) throw new Error('Container Number ပါသော Data Sheet သို့မဟုတ် Header Row ကို မတွေ့ပါ');
-
-            const sheetName = selected.name;
-            const headerInfo = selected.headerInfo;
-            const matrix = quickPasteSheetMatrix(workbook.Sheets[sheetName]);
-            const isLegacyContainerStuffing = quickPasteNormaliseKey(sheetName).includes('container stuffing')
-                && !headerInfo.map.includes('commenced') && !headerInfo.map.includes('completed');
-            // Legacy JPG-to-Excel reports use: No | Container Number | Condition |
-            // Container (Commenced) | Contents (Completed) | Bags | Gross MT | Tare MT | Seal.
-            const columnMap = isLegacyContainerStuffing
-                ? [null, 'ctn', null, 'commenced', 'completed', 'bags', 'gross', 'tare', 'seal']
-                : headerInfo.map;
-
-            const rows = matrix.slice(headerInfo.index + 1).map(cells => {
-                const row = quickPasteEmptyRow();
-                cells.forEach((value, index) => {
-                    const field = columnMap[index];
-                    if (field) row[field] = String(value || '').trim();
+                // 4. VGM REPORT
+                const wsVgm = wb.getWorksheet('VGM REPORT');
+                agSetCellVal(wsVgm, 'J5', dateSlash);
+                agSetCellVal(wsVgm, 'L5', startTime);
+                agSetCellVal(wsVgm, 'J6', vgmCompletedDate);
+                agSetCellVal(wsVgm, 'L6', vgmCompletedTime);
+                ['F9','G9','H9','I9'].forEach((addr, idx) => {
+                    if (idx < vgmHeaders.length) agSetCellVal(wsVgm, addr, vgmHeaders[idx]);
+                    else if (idx === 3) agSetCellVal(wsVgm, addr, null);
                 });
-                row.ctn = row.ctn.replace(/\s/g, '').toUpperCase();
-                row.commenced = normaliseQuickPasteTime(row.commenced);
-                row.completed = normaliseQuickPasteTime(row.completed);
-                // Average Gross Weight ကို Excel/Paste မှာ ပါလာသော value အတိုင်းသာ ထားမည်။
-                return row;
-            }).filter(row => row.ctn && !/^total$/i.test(row.ctn)).slice(0, MAX_FCL);
+                containers.forEach((c, i) => {
+                    const r = 10 + i, sRow = 21 + i;
+                    const vo = c.vgm_others || [];
+                    const perBag = c.vgm_per_bag_gross !== undefined ? c.vgm_per_bag_gross : perBagGross;
+                    agSetCellVal(wsVgm, `B${r}`, { formula: `'STUFFING REPORT'!B${sRow}` });
+                    agSetCellVal(wsVgm, `C${r}`, { formula: `'STUFFING REPORT'!F${sRow}` });
+                    agSetCellVal(wsVgm, `D${r}`, perBag);
+                    agSetCellVal(wsVgm, `E${r}`, { formula: `C${r}*D${r}` });
+                    agSetCellVal(wsVgm, `F${r}`, vo[0] ?? null);
+                    agSetCellVal(wsVgm, `G${r}`, vo[1] ?? null);
+                    agSetCellVal(wsVgm, `H${r}`, vo[2] ?? null);
+                    agSetCellVal(wsVgm, `I${r}`, vo[3] ?? null);
+                    agSetCellVal(wsVgm, `K${r}`, c.ctn_tare_kg || 0);
+                    agSetCellVal(wsVgm, `L${r}`, { formula: `SUM(E${r}:K${r})` });
+                });
+                for (let r = 10 + containers.length; r <= 49; r++) ['B','C','D','E','F','G','H','I','J','K','L'].forEach(col => agSetCellVal(wsVgm, `${col}${r}`, null));
+                for (let r = 10; r <= 49; r++) wsVgm.getRow(r).hidden = (r >= 10 + visibleCount);
 
-            if (!rows.length) throw new Error('Container Number ပါသော Row မတွေ့ပါ');
-            return { sheetName, rows };
-        }
+                // 5. CTN SURVEY REPORT
+                const wsSurvey = wb.getWorksheet('CTN SURVEY REPORT');
+                agSetCellVal(wsSurvey, 'I5', surveyLoc);
+                agSetCellVal(wsSurvey, 'I6', dateSlash);
+                containers.forEach((c, i) => {
+                    const r = 9 + i, sRow = 21 + i;
+                    agSetCellVal(wsSurvey, `B${r}`, { formula: `'STUFFING REPORT'!B${sRow}` });
+                    agSetCellVal(wsSurvey, `C${r}`, agToTitleCase(c.hole_dented || 'No'));
+                    agSetCellVal(wsSurvey, `D${r}`, agToTitleCase(c.floor_type || 'Wood'));
+                    agSetCellVal(wsSurvey, `E${r}`, agToTitleCase(c.floor_damaged || 'No'));
+                    agSetCellVal(wsSurvey, `F${r}`, agToTitleCase(c.free_odour || 'Yes'));
+                    agSetCellVal(wsSurvey, `G${r}`, agToTitleCase(c.free_infestation || 'Yes'));
+                    agSetCellVal(wsSurvey, `H${r}`, agToTitleCase(c.clean_dry || 'Yes'));
+                    agSetCellVal(wsSurvey, `I${r}`, agToTitleCase(c.color || ''));
+                    agSetCellVal(wsSurvey, `J${r}`, c.size || "20'");
+                    agSetCellVal(wsSurvey, `K${r}`, agToTitleCase(c.type || 'Steel'));
+                    agSetCellVal(wsSurvey, `L${r}`, agToTitleCase(c.suitable || 'Yes'));
+                });
+                for (let r = 9 + containers.length; r <= 48; r++) ['B','C','D','E','F','G','H','I','J','K','L'].forEach(col => agSetCellVal(wsSurvey, `${col}${r}`, null));
+                for (let r = 9; r <= 48; r++) wsSurvey.getRow(r).hidden = (r >= 9 + visibleCount);
 
-        function applyQuickPasteImportedMeta() {
-            const meta = quickPasteImportedMeta || {};
-            const setValue = (id, value) => {
-                const el = document.getElementById(id);
-                if (el && value) el.value = value;
-            };
-            setValue('job_ref', meta.jobRef);
-            setValue('shipper', meta.shipper);
-            setValue('buyer', meta.buyer);
-            setValue('commodity', meta.commodity);
-            setValue('quantity', meta.quantity);
-            setValue('packing', meta.packing);
-            setValue('place_insp', meta.placeInsp);
-            setValue('vessel', meta.vessel);
-            setValue('destination', meta.destination);
-            setValue('inspector', meta.inspector);
-            setValue('dep_time', meta.departureTime);
-            setValue('arr_time', meta.arrivalTime);
-            setValue('dep_date', normaliseQuickPasteDate(meta.departureDate));
-            setValue('arr_date', normaliseQuickPasteDate(meta.arrivalDate));
-            setValue('test_weight_no', meta.testWeightNo);
-            const testWeight = document.getElementById('test_weight');
-            if (testWeight && meta.testWeight && [...testWeight.options].some(option => option.value === meta.testWeight)) {
-                testWeight.value = meta.testWeight;
-            }
-            setValue('marking-input', meta.marking);
-        }
-
-        // This declaration intentionally supersedes the earlier generic one-sheet importer.
-        // It handles the exact JPGtoExcel multi-sheet workbook supplied by the user.
-        function importQuickPasteExcel(event) {
-            const file = event.target.files && event.target.files[0];
-            const status = document.getElementById('quickPasteStatus');
-            if (!file) return;
-            if (typeof XLSX === 'undefined') {
-                status.style.color = '#e74c3c';
-                status.textContent = '❌ Excel library မရရှိသေးပါ။ Internet connection ကို စစ်ဆေးပြီး App ကိုပြန်ဖွင့်ပါ။';
-                return;
-            }
-            status.style.color = '#3498db';
-            status.textContent = `⏳ ${file.name} ၏ Sheet များကို ဖတ်ယူနေပါသည်...`;
-            const reader = new FileReader();
-            reader.onload = function(loadEvent) {
-                try {
-                    const workbook = XLSX.read(loadEvent.target.result, { type: 'array', cellDates: false });
-                    const imported = quickPasteReadContainerSheet(workbook);
-                    quickPasteRows = imported.rows;
-                    quickPasteImportedMeta = quickPasteReadReportMeta(workbook);
-                    document.getElementById('quickPasteInput').value = [
-                        'Container No\tBags\tGross MT\tTare MT\tAve Gross Wt\tCommenced\tCompleted\tSeal No',
-                        ...quickPasteRows.map(row => [row.ctn, row.bags, row.gross, row.tare, row.aveGross, row.commenced, row.completed, row.seal].join('\t'))
-                    ].join('\n');
-                    quickPasteLastParsedText = document.getElementById('quickPasteInput').value.replace(/\r/g, '').trim();
-                    renderQuickPastePreview();
-                    const metaCount = Object.values(quickPasteImportedMeta).filter(Boolean).length;
-                    status.style.color = '#28a745';
-                    status.textContent = `✅ '${imported.sheetName}' Sheet မှ ${quickPasteRows.length} Container Row(s) နှင့် အခြား Sheet များမှ General Data ${metaCount} ခုကို Import လုပ်ပြီးပါပြီ။ Preview စစ်ပြီး Sync လုပ်ပါ။`;
-                } catch (error) {
-                    console.error('Quick Paste Multi-Sheet Import Error:', error);
-                    status.style.color = '#e74c3c';
-                    status.textContent = `❌ Excel Import မအောင်မြင်ပါ: ${error.message}`;
-                } finally {
-                    event.target.value = '';
+                let fileName = document.getElementById('agFileName').value.trim();
+                if (!fileName || fileName === 'SIR JOB NO') {
+                    fileName = jobRef ? `SIR JOB NO ${jobRef}` : 'SIR JOB NO';
+                    document.getElementById('agFileName').value = fileName;
                 }
-            };
-            reader.onerror = function() {
-                status.style.color = '#e74c3c';
-                status.textContent = '❌ File ကိုဖတ်မရပါ။ Excel/CSV file ကို ပြန်ရွေးပေးပါ။';
-                event.target.value = '';
-            };
-            reader.readAsArrayBuffer(file);
+                if (!fileName.toLowerCase().endsWith('.xlsx')) fileName += '.xlsx';
+
+                const outBuffer = await wb.xlsx.writeBuffer();
+                const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                const blob = new Blob([outBuffer], { type: mime });
+                agShowStatus(`🎉 ${fileName} ကို အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ! (${containers.length} FCL)`);
+                showExportModal(blob, fileName, mime, 'SIR Excel Report (Auto Generator)');
+            } catch (err) {
+                console.error(err);
+                agShowStatus('❌ ' + (err && err.message ? err.message : err), true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '🚀 Generate Excel';
+            }
         }
+
     </script>
 
 <!-- === SGS & SIR CLEAN PRO UPGRADE === -->
@@ -5862,5 +5655,506 @@
 })();
 </script>
 <!-- END_sn-custom-autocomplete-upgrade-v1 -->
+<script id="team-live-v1">
+// ===================================================================
+// TEAM LIVE — Job တစ်ခုချင်း Share Link + field-level live sync
+// Data: Firebase Realtime DB  sgs_live/{key}/flat/{field}  (+ meta, presence)
+// ===================================================================
+(function () {
+  'use strict';
+  const CFG_KEY = 'sgs_live_cfg';
+  const NAME_KEY = 'sgs_live_name';
+  const BASE_PREFIX = 'sgs_live_base_';
+  const SKIP_ID = /^(tg-|searchInput$|customFileName$|importBackupInput$)/;
+  const live = { cfg: null, db: null, ref: null, remote: null, base: {}, inflight: new Set(),
+    ready: false, pushing: false, applying: false, ended: false, online: true, error: '',
+    presence: {}, lastEdit: null, lastTyped: 0, timers: {}, handlers: [] };
+
+  const enc = id => String(id).replace(/[.#$\[\]\/]/g, '_');
+  const esc = v => (typeof escapeHtml === 'function' ? escapeHtml(v) : String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
+  const rand = () => Math.random().toString(36).slice(2, 7);
+
+  // ---------- pure 3-way merge (unit tested) ----------
+  // local/remote/base: flat maps. Returns what to apply locally, push to cloud, and base bookkeeping.
+  function threeWay(local, remote, base, inflight) {
+    const toApply = {}, toPush = {}, baseUpdates = {};
+    const keys = new Set([...Object.keys(local), ...Object.keys(remote), ...Object.keys(base)]);
+    keys.forEach(k => {
+      const l = local[k], r = remote[k], b = base[k];
+      if (r === l) { if (b !== l && !inflight.has(k)) baseUpdates[k] = l; return; }
+      const lc = l !== b, rc = r !== b;
+      if (lc) toPush[k] = (l === undefined) ? null : l;          // local edit wins on conflict
+      else if (rc) toApply[k] = (r === undefined) ? null : r;    // only remote changed
+    });
+    return { toApply, toPush, baseUpdates };
+  }
+  window.__liveThreeWay = threeWay;
+
+  // ---------- flat state <-> app storage ----------
+  function computeFlat() {
+    const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {} }) || { inputs: {} };
+    const inputs = data.inputs || {};
+    const flat = {};
+    Object.keys(inputs).forEach(id => {
+      if (SKIP_ID.test(id)) return;
+      flat['i:' + enc(id)] = String(inputs[id] == null ? '' : inputs[id]);
+    });
+    const part = (n, v) => { if (v === undefined || v === null) return; flat['p:' + n] = typeof v === 'string' ? v : JSON.stringify(v); };
+    part('tallies', data.tallies);
+    part('photo', data.photo);
+    part('sirWeighingRows', data.sirWeighingRows);
+    part('sirWeighingInfoHtml', data.sirWeighingInfoHtml);
+    part('sirWeighingInfoVisible', data.sirWeighingInfoVisible);
+    part('tallyExtra', localStorage.getItem('sgs_tally_extra_rows') || '[]');
+    part('vgm', localStorage.getItem('sgs_vgm_overrides') || '{}');
+    part('customCols', localStorage.getItem('sgs_custom_cols') || '[]');
+    part('fixedHeadings', JSON.stringify(fixedHeadings));
+    part('tallyCols', JSON.stringify(tallyTabColumns));
+    part('tallyMode', tallyTabMode);
+    part('sirPkgs', JSON.stringify(sirPackages));
+    return flat;
+  }
+
+  // Write remote entries into storage (+ in-memory vars). Returns {pkgsChanged}.
+  function writeEntries(entries, data) {
+    let pkgsChanged = false;
+    const pj = (v, fb) => { const x = safeParseJSON(v, fb); return x == null ? fb : x; };
+    Object.keys(entries).forEach(k => {
+      const v = entries[k];
+      if (k.startsWith('i:')) { const id = k.slice(2); if (v === null) delete data.inputs[id]; else data.inputs[id] = v; return; }
+      if (v === null) return;
+      switch (k.slice(2)) {
+        case 'tallies': data.tallies = pj(v, {}); break;
+        case 'photo': data.photo = v; break;
+        case 'sirWeighingRows': data.sirWeighingRows = pj(v, []); break;
+        case 'sirWeighingInfoHtml': data.sirWeighingInfoHtml = v; break;
+        case 'sirWeighingInfoVisible': data.sirWeighingInfoVisible = (v === 'true'); break;
+        case 'tallyExtra': localStorage.setItem('sgs_tally_extra_rows', v); data.tallyExtraRows = pj(v, []); break;
+        case 'vgm': localStorage.setItem('sgs_vgm_overrides', v); vgmOverrides = pj(v, {}); break;
+        case 'customCols': { localStorage.setItem('sgs_custom_cols', v); const a = pj(v, []); customColumns = Array.isArray(a) ? a : []; break; }
+        case 'fixedHeadings': { const a = pj(v, null); if (Array.isArray(a) && a.length === fixedHeadings.length) { fixedHeadings = a; localStorage.setItem('sgs_fixed_headings', v); } break; }
+        case 'tallyCols': localStorage.setItem('sgs_tally_tab_cols', v); break;
+        case 'tallyMode': localStorage.setItem('sgs_tally_mode', v); tallyTabMode = v; break;
+        case 'sirPkgs': { localStorage.setItem('sir_packages', v); const a = pj(v, []); sirPackages = Array.isArray(a) ? a : []; pkgsChanged = true; break; }
+      }
+    });
+    return { pkgsChanged };
+  }
+
+  function appInputFocused() {
+    const a = document.activeElement;
+    return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.closest && (a.closest('#sgs-app') || a.closest('#sir-app')));
+  }
+
+  // Apply remote changes to the screen. Returns the list of keys actually applied.
+  function applyRemote(toApply) {
+    const keys = Object.keys(toApply);
+    const typing = appInputFocused() && (Date.now() - live.lastTyped) < 2500;
+    const activeId = (document.activeElement && document.activeElement.id) || '';
+    let structural = false;
+    const direct = [];
+    keys.forEach(k => {
+      const v = toApply[k];
+      if (k.startsWith('p:')) { structural = true; return; }
+      const id = k.slice(2);
+      if (id === 'noOfCtn') { structural = true; return; }
+      const manual = /__manual$/.test(id);
+      const baseId = manual ? id.replace(/__manual$/, '') : id;
+      const el = document.getElementById(baseId);
+      if (!el) { structural = true; return; }
+      if (v === null && !manual) { structural = true; return; }
+      direct.push({ k, id, baseId, manual, v, el });
+    });
+
+    if (structural) {
+      if (typing) return [];                       // do not rebuild the screen while someone is typing
+      live.applying = true;
+      const y = window.scrollY;
+      try {
+        live.origSave();                           // flush the screen first so local-only edits survive
+        const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} }) || { inputs: {}, tallies: {} };
+        data.inputs = data.inputs || {};
+        const res = writeEntries(toApply, data);
+        localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+        loadFromStorage();
+        if (res.pkgsChanged) { try { renderSirPackages(); } catch (e) {} }
+        try { updateVGM(); } catch (e) {}
+        if (document.getElementById('sir-app').style.display !== 'none') { try { syncDataToSIR(); } catch (e) {} }
+        window.scrollTo(0, y);
+      } finally { live.applying = false; }
+      return keys;
+    }
+
+    live.applying = true;
+    const applied = [];
+    try {
+      direct.forEach(d => {
+        if (typing && d.baseId === activeId) return;   // keep what the user is typing; retry later
+        if (d.manual) d.el.dataset.manual = (d.v === '1') ? '1' : '0';
+        else {
+          if (d.el.value !== d.v) d.el.value = d.v;
+          d.el.setAttribute('value', d.v);
+          if (d.baseId === 'job-date-actual') updateDateDisplay(d.el);
+        }
+        applied.push(d.k);
+      });
+      if (applied.length) { recalculateAll(); live.origSave(); }
+    } finally { live.applying = false; }
+    return applied;
+  }
+
+  // ---------- sync engine ----------
+  function myName() { return (live.cfg && live.cfg.name) || localStorage.getItem(NAME_KEY) || 'User'; }
+
+  function persistBase() {
+    clearTimeout(live.timers.base);
+    live.timers.base = setTimeout(() => {
+      if (!live.cfg) return;
+      try { localStorage.setItem(BASE_PREFIX + live.cfg.key, JSON.stringify(live.base)); } catch (e) {}
+    }, 800);
+  }
+
+  function push(toPush) {
+    if (live.pushing) return;
+    const keys = Object.keys(toPush);
+    const upd = {};
+    keys.forEach(k => { upd['flat/' + k] = toPush[k]; });
+    upd['meta/lastEdit'] = { by: myName(), at: firebase.database.ServerValue.TIMESTAMP };
+    live.pushing = true;
+    keys.forEach(k => live.inflight.add(k));
+    updateBadge();
+    live.ref.update(upd).then(() => {
+      keys.forEach(k => { live.inflight.delete(k); if (toPush[k] === null) delete live.base[k]; else live.base[k] = toPush[k]; });
+      live.pushing = false; live.error = ''; persistBase(); updateBadge();
+    }).catch(err => {
+      keys.forEach(k => live.inflight.delete(k));
+      live.pushing = false; live.error = (err && (err.code || err.message)) || 'error'; updateBadge();
+    });
+  }
+
+  function syncNow() {
+    if (!live.cfg || !live.ready || live.applying || live.ended) return;
+    if (typeof suppressAutoSave !== 'undefined' && suppressAutoSave) return;
+    try {
+      const local = computeFlat();
+      const r = threeWay(local, live.remote || {}, live.base, live.inflight);
+      let dirty = false;
+      Object.keys(r.baseUpdates).forEach(k => { if (r.baseUpdates[k] === undefined) delete live.base[k]; else live.base[k] = r.baseUpdates[k]; dirty = true; });
+      if (Object.keys(r.toApply).length) {
+        applyRemote(r.toApply).forEach(k => { if (r.toApply[k] === null) delete live.base[k]; else live.base[k] = r.toApply[k]; dirty = true; });
+      }
+      if (Object.keys(r.toPush).length) push(r.toPush);
+      if (dirty) persistBase();
+    } catch (e) { console.warn('Team Live sync error:', e); }
+    updateBadge();
+  }
+  function soon(ms) { clearTimeout(live.timers.soon); live.timers.soon = setTimeout(syncNow, ms || 700); }
+
+  // ---------- connection ----------
+  function getDb(url) {
+    if (typeof firebase === 'undefined') throw new Error('Firebase library မရရှိပါ။ Internet ချိတ်ဆက်မှုကို စစ်ဆေးပါ။');
+    let app = firebase.apps.find(a => a.name.indexOf('live') === 0 && a.options && a.options.databaseURL === url);
+    if (!app) app = firebase.initializeApp({ databaseURL: url }, 'live_' + rand());
+    return app.database();
+  }
+
+  function start(cfg) {
+    stopListeners();
+    live.cfg = cfg; live.ended = false; live.ready = false; live.error = ''; live.remote = null;
+    live.db = getDb(cfg.url);
+    live.ref = live.db.ref('sgs_live/' + cfg.key);
+    live.base = safeParseJSON(localStorage.getItem(BASE_PREFIX + cfg.key), {}) || {};
+    // The older single-user cloud sync must not run against the same job at the same time.
+    try { clearTimeout(cloudTimer); cloudTimer = null; if (cloudListenerRef) { cloudListenerRef.off(); cloudListenerRef = null; cloudListenerKey = ''; } } catch (e) {}
+
+    const flatRef = live.ref.child('flat');
+    const onFlat = snap => {
+      const v = snap.val();
+      if (v === null) { endedRemotely(); return; }
+      live.remote = v; live.ready = true; live.error = '';
+      soon(150);
+    };
+    flatRef.on('value', onFlat, err => { live.error = (err && err.code) || 'listen'; updateBadge(); });
+    live.handlers.push(() => flatRef.off('value', onFlat));
+
+    const pRef = live.ref.child('presence');
+    const onPres = s => { live.presence = s.val() || {}; updateBadge(); renderModalIfOpen(); };
+    pRef.on('value', onPres); live.handlers.push(() => pRef.off('value', onPres));
+    const mRef = live.ref.child('meta/lastEdit');
+    const onMeta = s => { live.lastEdit = s.val(); renderModalIfOpen(); };
+    mRef.on('value', onMeta); live.handlers.push(() => mRef.off('value', onMeta));
+
+    const cRef = live.db.ref('.info/connected');
+    const onConn = s => {
+      live.online = !!s.val();
+      if (live.online && live.cfg) {
+        const me = live.ref.child('presence/' + CLOUD_DEVICE_ID);
+        me.onDisconnect().remove();
+        me.set({ name: myName() });
+      }
+      updateBadge();
+    };
+    cRef.on('value', onConn); live.handlers.push(() => cRef.off('value', onConn));
+
+    live.timers.interval = setInterval(syncNow, 5000);
+    updateBadge();
+  }
+
+  function stopListeners() {
+    live.handlers.forEach(h => { try { h(); } catch (e) {} });
+    live.handlers = [];
+    clearInterval(live.timers.interval); clearTimeout(live.timers.soon);
+  }
+
+  function leave(silent) {
+    if (!live.cfg) return;
+    const key = live.cfg.key;
+    try { live.ref.child('presence/' + CLOUD_DEVICE_ID).remove(); } catch (e) {}
+    stopListeners();
+    try { localStorage.removeItem(CFG_KEY); localStorage.removeItem(BASE_PREFIX + key); } catch (e) {}
+    live.cfg = null; live.ready = false; live.presence = {}; live.base = {};
+    updateBadge(); renderModalIfOpen();
+    if (!silent) alert('Team Live မှ ထွက်ပြီးပါပြီ။ ဒီစက်ထဲက Data ကို ဆက်ထားပါသည်။');
+  }
+
+  function endedRemotely() {
+    if (live.ended) return;
+    live.ended = true;
+    alert('⚠️ Team Live session ပြီးဆုံးသွားပါပြီ (Owner က ပိတ်လိုက်သည် သို့မဟုတ် မတွေ့တော့ပါ)။ ဒီစက်ထဲက Data ကို ဆက်ထားပါသည်။');
+    leave(true);
+  }
+
+  // ---------- share / join ----------
+  function toCode(cfg) {
+    const json = JSON.stringify({ u: cfg.url, k: cfg.key, j: cfg.jobNo });
+    return btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function fromCode(text) {
+    let code = String(text || '').trim();
+    const m = code.match(/join=([A-Za-z0-9_\-]+)/);
+    if (m) code = m[1];
+    code = code.replace(/-/g, '+').replace(/_/g, '/');
+    while (code.length % 4) code += '=';
+    const o = JSON.parse(decodeURIComponent(escape(atob(code))));
+    if (!o || !o.u || !o.k) throw new Error('bad code');
+    return o;
+  }
+  function toLink(cfg) {
+    if (!/^https?:$/.test(location.protocol)) return '';
+    return location.href.split('#')[0] + '#join=' + toCode(cfg);
+  }
+
+  async function startShare() {
+    const name = (document.getElementById('live-name-input')?.value || '').trim();
+    const url = normaliseFirebaseUrl(document.getElementById('live-url-input')?.value || '');
+    const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
+    if (!jobNo) { alert('⚠️ Job No အရင်ဖြည့်ပါ'); return; }
+    if (!name) { alert('⚠️ သင့်နာမည် ထည့်ပါ (Team မှာ ပြမည့်နာမည်)'); return; }
+    if (!url) { alert('⚠️ Firebase URL ထည့်ပါ'); return; }
+    localStorage.setItem(NAME_KEY, name);
+    localStorage.setItem('sgs_firebase_url', url);
+    const btn = document.getElementById('live-start-btn'); if (btn) { btn.disabled = true; btn.textContent = '⏳ …'; }
+    try {
+      window.saveToStorage();
+      const flat = computeFlat();
+      const key = cloudKey(jobNo) + '-' + rand();
+      const db = getDb(url);
+      await db.ref('sgs_live/' + key).set({ flat, meta: { jobNo, owner: name, createdAt: firebase.database.ServerValue.TIMESTAMP } });
+      const cfg = { url, key, jobNo, name, owner: true };
+      localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+      localStorage.setItem(BASE_PREFIX + key, JSON.stringify(flat));
+      start(cfg);
+    } catch (e) {
+      alert('❌ Live စတင်မရပါ: ' + (e && e.message ? e.message : e) + '\n\nFirebase Rules တွင် sgs_live ကို read/write ခွင့်ပြုထားရန် လိုပါသည်။');
+    }
+    renderModal();
+  }
+
+  async function join(text, fromLink) {
+    let info;
+    try { info = fromCode(text); } catch (e) { alert('❌ Link / Code မမှန်ပါ'); return; }
+    if (live.cfg && live.cfg.key === info.k) { alert('ဒီ Session ထဲမှာ ရှိပြီးသားပါ။'); return; }
+    if (!confirm(`👥 Job [${info.j || ''}] ၏ Team Live Session သို့ ဝင်မလား?\n\nဒီစက်ထဲက လက်ရှိ Job ကို Saved Jobs ထဲ အရင်သိမ်းပြီး၊ Team ၏ Data ဖြင့် အစားထိုးပါမည်။`)) return;
+    let name = localStorage.getItem(NAME_KEY) || '';
+    if (!name) { name = (prompt('သင့်နာမည် (Team မှာ ပြမည့်နာမည်):', '') || '').trim(); if (!name) return; localStorage.setItem(NAME_KEY, name); }
+    try {
+      const db = getDb(info.u);
+      const snap = await db.ref('sgs_live/' + info.k + '/flat').once('value');
+      const flat = snap.val();
+      if (!flat) { alert('⚠️ ဒီ Session မတွေ့ပါ (ပြီးဆုံးသွားပြီ ဖြစ်နိုင်ပါသည်)။'); return; }
+      // keep a copy of whatever is on this device now
+      try {
+        window.saveToStorage();
+        const cur = (document.getElementById('job-no-input')?.value || '').trim();
+        if (cur) { const saved = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {}); saved[cur] = buildJobData(); localStorage.setItem('sgs_saved_jobs', JSON.stringify(saved)); }
+      } catch (e) {}
+      if (live.cfg) leave(true);
+      suppressAutoSave = true;
+      ['sgs_vgm_overrides', 'sgs_custom_cols', 'sgs_fixed_headings', 'sgs_tally_tab_cols', 'sgs_tally_extra_rows', 'sir_packages', SIR_FORM_STATE_KEY].forEach(k => localStorage.removeItem(k));
+      const data = { inputs: {}, tallies: {} };
+      writeEntries(flat, data);
+      localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+      const cfg = { url: info.u, key: info.k, jobNo: info.j || '', name, owner: false };
+      localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+      localStorage.setItem(BASE_PREFIX + info.k, JSON.stringify(flat));
+      history.replaceState(null, '', location.href.split('#')[0]);
+      location.reload();
+    } catch (e) {
+      suppressAutoSave = false;
+      alert('❌ Join မရပါ: ' + (e && e.message ? e.message : e));
+    }
+  }
+
+  async function endSession() {
+    if (!live.cfg || !live.cfg.owner) return;
+    if (!confirm('Session ကို ပိတ်မလား? Team Member အားလုံး Live ကနေ ထွက်သွားပါမည် (Cloud ပေါ်က Live Data ပျက်သွားမည်၊ တစ်ဦးချင်းစက်ထဲက Data မပျက်ပါ)။')) return;
+    try { await live.ref.remove(); } catch (e) { alert('❌ ' + (e.message || e)); return; }
+    live.ended = true; leave(true);
+  }
+
+  // ---------- UI ----------
+  function updateBadge() {
+    let el = document.getElementById('live-status');
+    if (!live.cfg) { if (el) el.style.display = 'none'; return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'live-status'; el.className = 'exclude-export';
+      el.style.cssText = 'position:fixed; left:8px; bottom:36px; z-index:9999; color:#fff; font-size:11px; padding:4px 10px; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.3); cursor:pointer;';
+      el.addEventListener('click', openModal);
+      document.body.appendChild(el);
+    }
+    const n = Object.keys(live.presence || {}).length;
+    let text, color;
+    if (live.error) { text = '❌ Live Error (' + live.error + ')'; color = '#c0392b'; }
+    else if (!live.online) { text = '⚠️ Live Offline'; color = '#e67e22'; }
+    else if (!live.ready) { text = '⏳ Live ချိတ်ဆက်နေ…'; color = '#2980b9'; }
+    else if (live.pushing) { text = '⏫ Live တင်နေ… · 👥 ' + n; color = '#2980b9'; }
+    else { text = '👥 Live · ' + n + ' online ✓'; color = '#27ae60'; }
+    el.textContent = text; el.style.background = color; el.style.display = 'block';
+  }
+
+  function modalEl() { return document.getElementById('liveTeamModal'); }
+  function renderModalIfOpen() { const m = modalEl(); if (m && m.style.display === 'flex') renderModal(); }
+  function openModal() { renderModal(); modalEl().style.display = 'flex'; }
+  function closeModal() { modalEl().style.display = 'none'; }
+
+  function copyText(text, msg) {
+    const done = () => alert(msg || '✅ Copy ကူးပြီးပါပြီ');
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done).catch(() => fb());
+    else fb();
+    function fb() { const t = document.createElement('textarea'); t.value = text; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (e) {} t.remove(); done(); }
+  }
+
+  function renderModal() {
+    const body = document.getElementById('liveTeamBody');
+    if (!body) return;
+    const inp = 'width:100%; padding:9px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-size:14px;';
+    const lbl = 'font-size:12px; font-weight:700; color:#555; display:block; margin:10px 0 4px;';
+    const btn = (bg) => `background:${bg}; color:#fff; border:none; border-radius:6px; padding:10px 12px; font-weight:700; font-size:13px; cursor:pointer;`;
+    let html = '';
+    if (live.cfg) {
+      const link = toLink(live.cfg), code = toCode(live.cfg);
+      const names = Object.values(live.presence || {}).map(p => esc((p && p.name) || '?'));
+      const le = live.lastEdit;
+      const when = le && le.at ? new Date(le.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      html += `<div style="background:#eef5f0; border:1px solid #c8d6cf; border-radius:8px; padding:10px; font-size:13px;">
+        <b>Job: ${esc(live.cfg.jobNo)}</b> ${live.cfg.owner ? '<span style="color:#2C5E43;">(Owner)</span>' : ''}<br>
+        👥 Online (${names.length}): ${names.join(', ') || '-'}<br>
+        ${le ? `✏️ နောက်ဆုံးပြင်သူ: <b>${esc(le.by)}</b> ${when}` : ''}
+      </div>`;
+      html += `<label style="${lbl}">🔗 Share Link (Team Member ကို ပို့ပါ)</label>`;
+      if (link) {
+        html += `<input type="text" readonly value="${esc(link)}" onclick="this.select()" style="${inp}">
+          <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+            <button type="button" id="live-copy-link" style="${btn('#3498db')}">📋 Copy Link</button>
+            ${navigator.share ? `<button type="button" id="live-share-link" style="${btn('#8e44ad')}">📤 Share</button>` : ''}
+          </div>`;
+      } else {
+        html += `<div style="font-size:12px; color:#a05a00; background:#fff6e5; padding:8px; border-radius:6px;">ဒီ App ကို Web (https) ပေါ်မှာ မဖွင့်ထားသဖြင့် Link မထုတ်နိုင်ပါ။ အောက်က Code ကို ပို့ပါ — Team Member က Team Live ထဲမှာ "Code ဖြင့် ဝင်မည်" တွင် Paste လုပ်ပါ။</div>`;
+      }
+      html += `<label style="${lbl}">🔑 Join Code</label>
+        <input type="text" readonly value="${esc(code)}" onclick="this.select()" style="${inp} font-family:monospace; font-size:11px;">
+        <button type="button" id="live-copy-code" style="${btn('#3498db')} margin-top:6px;">📋 Copy Code</button>
+        <div style="font-size:11px; color:#777; margin-top:8px;">Link ရှိသူတိုင်း ဒီ Job ကို ကြည့်/ပြင်နိုင်ပါသည်။ ပြင်သမျှ အားလုံးသော စက်များတွင် Live ပေါ်ပါမည်။</div>
+        <div style="display:flex; gap:6px; margin-top:14px; flex-wrap:wrap;">
+          <button type="button" id="live-leave" style="${btn('#e67e22')}">🚪 Live မှ ထွက်မည်</button>
+          ${live.cfg.owner ? `<button type="button" id="live-end" style="${btn('#c0392b')}">⛔ Session ပိတ်မည် (Owner)</button>` : ''}
+        </div>`;
+    } else {
+      const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
+      html += `<div style="font-size:13px; color:#444; line-height:1.5;">လက်ရှိ Job ကို Team ဖြင့် အတူတကွ Live ပြင်ဆင်နိုင်ရန် Share Link ထုတ်ပါ။</div>
+        <label style="${lbl}">Job No</label><input type="text" readonly value="${esc(jobNo)}" style="${inp} background:#f1f1f1;" placeholder="Job No အရင်ဖြည့်ပါ">
+        <label style="${lbl}">သင့်နာမည်</label><input type="text" id="live-name-input" value="${esc(localStorage.getItem(NAME_KEY) || '')}" style="${inp}" placeholder="e.g. Kyaw Nay Aung">
+        <label style="${lbl}">Firebase URL (Realtime Database)</label><input type="text" id="live-url-input" value="${esc(localStorage.getItem('sgs_firebase_url') || '')}" style="${inp}" placeholder="https://your-project-default-rtdb.firebaseio.com" autocapitalize="off" autocomplete="off" spellcheck="false">
+        <button type="button" id="live-start-btn" style="${btn('#2C5E43')} width:100%; margin-top:12px; font-size:14px;">🔗 Share Link ထုတ်မည် (Live စတင်မည်)</button>
+        <div style="border-top:1px dashed #bbb; margin-top:16px; padding-top:6px;">
+          <label style="${lbl}">📥 Code / Link ဖြင့် ဝင်မည်</label>
+          <input type="text" id="live-join-input" style="${inp}" placeholder="Link (သို့) Code ကို Paste လုပ်ပါ">
+          <button type="button" id="live-join-btn" style="${btn('#3498db')} width:100%; margin-top:6px;">👥 Join Team Job</button>
+        </div>
+        <details style="margin-top:14px; font-size:12px; color:#555;"><summary style="cursor:pointer; font-weight:700;">Firebase Rules (တစ်ကြိမ်သာ ပြင်ရန်)</summary>
+          <pre style="background:#f4f4f4; padding:8px; border-radius:6px; overflow:auto; font-size:11px;">{
+  "rules": {
+    "sgs_jobs": { ".read": true, ".write": true },
+    "sgs_live": { ".read": true, ".write": true }
+  }
+}</pre>Firebase Console → Realtime Database → Rules တွင် ထည့်ပြီး Publish နှိပ်ပါ။</details>`;
+    }
+    body.innerHTML = html;
+    const on = (id, fn) => { const e = document.getElementById(id); if (e) e.addEventListener('click', fn); };
+    on('live-start-btn', startShare);
+    on('live-join-btn', () => join(document.getElementById('live-join-input').value));
+    on('live-copy-link', () => copyText(toLink(live.cfg), '✅ Link ကူးပြီးပါပြီ'));
+    on('live-copy-code', () => copyText(toCode(live.cfg), '✅ Code ကူးပြီးပါပြီ'));
+    on('live-share-link', () => navigator.share({ title: 'SGS Job ' + live.cfg.jobNo, text: 'SGS Surveyor Notes - Job ' + live.cfg.jobNo + ' (Team Live)', url: toLink(live.cfg) }).catch(() => {}));
+    on('live-leave', () => { if (confirm('Live မှ ထွက်မလား? ဒီစက်ထဲက Data ကို ဆက်ထားပါမည်။')) leave(false); });
+    on('live-end', endSession);
+  }
+
+  // ---------- hooks into the existing app ----------
+  function wrap(name, fn) {
+    const o = window[name];
+    if (typeof o !== 'function') return;
+    window[name] = function () { return fn.call(this, o, arguments); };
+  }
+  function guardLeave(o, args) {
+    if (live.cfg) {
+      if (!confirm('Team Live Session ထဲမှာ ရှိနေပါသည်။ ဒီလုပ်ဆောင်ချက်က Team ၏ Data ကို ထပ်ရေးသွားနိုင်သဖြင့် Live မှ အရင်ထွက်ပါမည်။ ဆက်လုပ်မလား?')) {
+        try { args[0] && args[0].target && (args[0].target.value = ''); } catch (e) {}
+        return;
+      }
+      leave(true);
+    }
+    return o.apply(this, args);
+  }
+
+  live.origSave = window.saveToStorage;
+  wrap('saveToStorage', function (o, a) { const r = o.apply(this, a); if (live.cfg && !live.applying) soon(700); return r; });
+  wrap('scheduleCloudUpload', function (o, a) { if (live.cfg) return; return o.apply(this, a); });
+  wrap('attachCloudListener', function (o, a) { if (live.cfg) return; return o.apply(this, a); });
+  ['loadJobFromDB', 'createNewJob', 'clearAppData', 'importBackupFile'].forEach(n => wrap(n, guardLeave));
+  ['updateSirPackage', 'addSirPackage', 'deleteSirPackage', 'toggleVgmEdit'].forEach(n => wrap(n, function (o, a) { const r = o.apply(this, a); if (live.cfg && !live.applying) soon(500); return r; }));
+
+  ['input', 'change'].forEach(evt => document.addEventListener(evt, e => { if (e.isTrusted) live.lastTyped = Date.now(); }, true));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') soon(200); });
+  window.addEventListener('online', () => soon(200));
+
+  window.openLiveTeam = openModal;
+  window.closeLiveTeam = closeModal;
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const cfg = safeParseJSON(localStorage.getItem(CFG_KEY), null);
+      if (cfg && cfg.url && cfg.key) { try { start(cfg); } catch (e) { console.warn('Team Live start failed:', e); } }
+      const m = (location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
+      if (m) {
+        const same = cfg && (() => { try { return fromCode(m[1]).k === cfg.key; } catch (e) { return false; } })();
+        if (same) history.replaceState(null, '', location.href.split('#')[0]);
+        else { join(location.hash, true); history.replaceState(null, '', location.href.split('#')[0]); }
+      }
+    }, 600);
+  });
+})();
+</script>
 </body>
 </html>

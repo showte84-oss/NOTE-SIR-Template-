@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
     <!-- SIR App Dependencies -->
@@ -225,15 +226,26 @@
             .ag-hero { padding: 18px; }
             .ag-generate { width: 100%; }
         }
+        #account-bar { box-sizing:border-box; }
+        #account-bar button { min-height:42px; }
+        body.auth-pending #sgs-app, body.auth-pending #sir-app, body.auth-pending #auto-gen-app { visibility:hidden; }
+        @media (max-width:520px) { #account-bar { align-items:flex-start; } #account-bar > div { width:100%; } #account-bar button { flex:1 1 140px; } }
     </style>
 </head>
-<body>
+<body class="auth-pending">
 
     <!-- App Switcher Navigation -->
     <div id="master-nav" role="navigation" aria-label="အက်ပ်ရွေးချယ်ရန်">
         <button type="button" id="nav-sgs" class="nav-btn active" aria-pressed="true" aria-controls="sgs-app" onclick="switchApp('sgs')">📝 SGS Surveyor Notes</button>
         <button type="button" id="nav-sir" class="nav-btn" aria-pressed="false" aria-controls="sir-app" onclick="switchApp('sir')">🚀 SIR Template Generator</button>
         <button type="button" id="nav-auto-gen" class="nav-btn" aria-pressed="false" aria-controls="auto-gen-app" onclick="switchApp('auto-gen')">⚡ Auto Generator</button>
+    </div>
+    <div id="account-bar" role="region" aria-label="Google အကောင့်" style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 14px; background:#fff; border-bottom:1px solid #d8e0dc;">
+        <span id="auth-label" aria-live="polite">Google အကောင့် စစ်ဆေးနေပါသည်…</span>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" id="google-signin-btn" onclick="signInWithGoogle()" style="background:#4285f4; color:#fff; border:0; border-radius:6px; padding:10px 14px; font-weight:bold; cursor:pointer;">Google အကောင့်ဖြင့် ဝင်မည်</button>
+            <button type="button" id="google-signout-btn" onclick="signOutGoogle()" style="display:none; background:#6c757d; color:#fff; border:0; border-radius:6px; padding:10px 14px; font-weight:bold; cursor:pointer;">ထွက်မည်</button>
+        </div>
     </div>
 
     <!-- ========================================== -->
@@ -410,7 +422,7 @@
                 <div class="form-group"><label>Bot Token</label><input type="text" id="tg-token-input" placeholder="e.g. 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"></div>
                 <div class="form-group" style="margin-top:10px;"><label>Chat ID</label><input type="text" id="tg-chatid-input" placeholder="e.g. 123456789"></div>
                 <div style="border-top:1px dashed #bbb; margin-top:15px; padding-top:12px;">
-                    <div class="form-group"><label>Firebase URL (Realtime Database)</label><input type="text" id="tg-firebase-url" placeholder="https://your-project-default-rtdb.firebaseio.com" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
+                    <div class="form-group"><label>Firebase URL (Realtime Database)</label><input type="text" id="tg-firebase-url" value="https://surveyor-note-default-rtdb.asia-southeast1.firebasedatabase.app" placeholder="https://your-project-default-rtdb.firebaseio.com" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
                     <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px;"><input type="checkbox" id="tg-firebase-auto" style="width:auto;"> ဒီစက်မှ ရိုက်တာနဲ့ Cloud သို့ အလိုအလျောက် တင်မည် (Auto Upload)</label>
                     <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px;"><input type="checkbox" id="tg-firebase-live" style="width:auto;"> တခြားစက်က ပြင်တာကို Load မလုပ်ဘဲ အလိုအလျောက် လက်ခံမည် (Live Update)</label>
                     <div style="font-size:11px; color:#777; margin-top:4px;">ဖုန်းကို ကြည့်ရုံသာ သုံးမယ်ဆိုရင် Auto Upload ကို ပိတ်ထားပါ။</div>
@@ -691,6 +703,33 @@ Important Rules for Extraction:
     <!-- MASTER & APP SCRIPTS                       -->
     <!-- ========================================== -->
     <script>
+        // Keep Firebase Auth's own native storage untouched. App data is separated by Google UID.
+        const nativeStorage = window.localStorage;
+        const storageMigrationKey = 'sgs_auth_scope_migrated_v1';
+        if (nativeStorage.getItem(storageMigrationKey) !== '1') {
+            const oldKeys = [];
+            for (let i = 0; i < nativeStorage.length; i++) {
+                const key = nativeStorage.key(i);
+                if (key && (key.startsWith('sgs_') || key.startsWith('sir')) && !['sgs_auth_scope_uid', 'sgs_firebase_url', 'sgs_device_id'].includes(key)) oldKeys.push(key);
+            }
+            oldKeys.forEach(key => {
+                const scopedKey = 'sgs_user_local::' + key;
+                if (nativeStorage.getItem(scopedKey) === null) nativeStorage.setItem(scopedKey, nativeStorage.getItem(key));
+                nativeStorage.removeItem(key);
+            });
+            nativeStorage.setItem(storageMigrationKey, '1');
+        }
+        let appStorageUid = nativeStorage.getItem('sgs_auth_scope_uid') || 'local';
+        const appStorageGlobalKeys = new Set(['sgs_auth_scope_uid', 'sgs_firebase_url', 'sgs_device_id']);
+        function appStorageKey(key) { const k = String(key); return appStorageGlobalKeys.has(k) ? k : `sgs_user_${appStorageUid}::${k}`; }
+        const appStorage = {
+            getItem(key) { return nativeStorage.getItem(appStorageKey(key)); },
+            setItem(key, value) { nativeStorage.setItem(appStorageKey(key), String(value)); },
+            removeItem(key) { nativeStorage.removeItem(appStorageKey(key)); },
+            clear() { const prefix = `sgs_user_${appStorageUid}::`; const keys=[]; for(let i=0;i<nativeStorage.length;i++){const k=nativeStorage.key(i);if(k && k.startsWith(prefix)) keys.push(k);} keys.forEach(k=>nativeStorage.removeItem(k)); },
+            key(index) { const prefix=`sgs_user_${appStorageUid}::`; const keys=[]; for(let i=0;i<nativeStorage.length;i++){const k=nativeStorage.key(i);if(k && k.startsWith(prefix)) keys.push(k.slice(prefix.length));} return keys[index] ?? null; },
+            get length() { const prefix=`sgs_user_${appStorageUid}::`; let n=0; for(let i=0;i<nativeStorage.length;i++){const k=nativeStorage.key(i);if(k && k.startsWith(prefix)) n++;} return n; }
+        };
         const MAX_FCL = 40;
         let vgmOverrides = {}; // Global scope for sync consistency
         // Set while a saved job is being loaded and the page is about to reload: the old form must not
@@ -701,8 +740,8 @@ Important Rules for Extraction:
                 let tallyTabColumns = [...DEFAULT_TALLY_TAB_COLUMNS];
         let showTallyHeaderTools = true;
         const DEFAULT_TALLY_MODE = "Bags";
-        let tallyDefaultBags = Math.max(0, Number(localStorage.getItem("sgs_tally_default_bags") ?? 60) || 0);
-        let tallyTabMode = localStorage.getItem("sgs_tally_mode") || DEFAULT_TALLY_MODE;
+        let tallyDefaultBags = Math.max(0, Number(appStorage.getItem("sgs_tally_default_bags") ?? 60) || 0);
+        let tallyTabMode = appStorage.getItem("sgs_tally_mode") || DEFAULT_TALLY_MODE;
         // --- Master App Switcher & Auto Sync Logic ---
         const SIR_FORM_STATE_KEY = 'sir_generator_form_state_v1';
         function saveSIRFormState() {
@@ -716,12 +755,12 @@ Important Rules for Extraction:
             });
             const weighing = document.getElementById('sir-weighing-container');
             const state = { values, weighingHtml: weighing ? weighing.innerHTML : '', savedAt: Date.now() };
-            try { localStorage.setItem(SIR_FORM_STATE_KEY, JSON.stringify(state)); }
+            try { appStorage.setItem(SIR_FORM_STATE_KEY, JSON.stringify(state)); }
             catch (e) { console.warn('Could not persist SIR Generator form state:', e); }
         }
         function restoreSIRFormState() {
             let state;
-            try { state = JSON.parse(localStorage.getItem(SIR_FORM_STATE_KEY) || 'null'); }
+            try { state = JSON.parse(appStorage.getItem(SIR_FORM_STATE_KEY) || 'null'); }
             catch (e) { state = null; }
             if (!state || !state.values) return false;
             const weighing = document.getElementById('sir-weighing-container');
@@ -978,43 +1017,128 @@ Important Rules for Extraction:
         // SGS APP SCRIPTS
         // ===============================================
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY_HERE",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyB4zv634U4mTPPE93a9LNZgullvfTwvo6g",
+            authDomain: "surveyor-note.firebaseapp.com",
+            databaseURL: "https://surveyor-note-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "surveyor-note",
+            storageBucket: "surveyor-note.firebasestorage.app",
+            messagingSenderId: "84485932903",
+            appId: "1:84485932903:web:04500d0fad1a7cee5751c2",
+            measurementId: "G-F34YEWDM71"
         };
 
         let isFirebaseReady = false;
         let database = null;
+        let auth = null;
+        let currentUser = null;
+        let authInitialized = false;
 
-        // Firebase Realtime Database URL is entered by the user in Menu > Setting (saved per device).
+        // Firebase Realtime Database URL may be overridden in Settings; defaults to this project.
         function normaliseFirebaseUrl(value) {
             let url = String(value || '').trim().replace(/\/+$/, '');
             if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
             return url;
         }
-        function getFirebaseUrl() { return normaliseFirebaseUrl(localStorage.getItem('sgs_firebase_url')); }
+        function getFirebaseUrl() { return normaliseFirebaseUrl(firebaseConfig.databaseURL); }
         const CLOUD_DEVICE_ID = (() => {
             try {
-                let id = localStorage.getItem('sgs_device_id');
-                if (!id) { id = 'dev-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem('sgs_device_id', id); }
+                let id = appStorage.getItem('sgs_device_id');
+                if (!id) { id = 'dev-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); appStorage.setItem('sgs_device_id', id); }
                 return id;
             } catch (e) { return 'dev-' + Math.random().toString(36).slice(2, 10); }
         })();
-        function isCloudLive() { return localStorage.getItem('sgs_cloud_live') !== '0'; }
+        function isCloudLive() { return appStorage.getItem('sgs_cloud_live') !== '0'; }
         function cloudKey(jobNo) { return String(jobNo || '').trim().replace(/[.#$\[\]\/]/g, '-'); }
 
         try {
-            const fbUrl = getFirebaseUrl();
-            if (fbUrl && typeof firebase !== 'undefined') {
-                const fbApp = firebase.apps.find(a => a.name === 'sgs') || firebase.initializeApp({ databaseURL: fbUrl }, 'sgs');
+            if (typeof firebase !== 'undefined') {
+                const fbUrl = getFirebaseUrl();
+                const fbOptions = Object.assign({}, firebaseConfig, { databaseURL: fbUrl });
+                const fbApp = firebase.apps.find(a => a.name === 'sgs') || firebase.initializeApp(fbOptions, 'sgs');
+                auth = fbApp.auth();
+                auth.useDeviceLanguage();
                 database = fbApp.database();
                 isFirebaseReady = true;
+                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => console.warn('Auth persistence:', err));
+                auth.onAuthStateChanged(user => {
+                    const nextUid = user ? user.uid : 'local';
+                    const previousUid = nativeStorage.getItem('sgs_auth_scope_uid') || 'local';
+                    if (previousUid !== nextUid) {
+                        nativeStorage.setItem('sgs_auth_scope_uid', nextUid);
+                        appStorageUid = nextUid;
+                        location.reload();
+                        return;
+                    }
+                    currentUser = user || null;
+                    authInitialized = true;
+                    document.body.classList.remove('auth-pending');
+                    renderGoogleAccount();
+                    refreshCloudStatus();
+                    if (currentUser) {
+                        setTimeout(attachCloudListener, 100);
+                    } else if (cloudListenerRef) {
+                        try { cloudListenerRef.off(); } catch (e) {}
+                        cloudListenerRef = null; cloudListenerKey = '';
+                    }
+                }, err => {
+                    console.error('Firebase Auth state error:', err);
+                    authInitialized = true; document.body.classList.remove('auth-pending');
+                    renderGoogleAccount(err); refreshCloudStatus();
+                });
             }
-        } catch(e) { console.warn('Firebase init failed:', e); isFirebaseReady = false; database = null; }
+        } catch(e) {
+            console.warn('Firebase init failed:', e); isFirebaseReady = false; database = null; auth = null;
+            document.body.classList.remove('auth-pending');
+        }
+        setTimeout(() => {
+            if (!authInitialized) { authInitialized = true; document.body.classList.remove('auth-pending'); renderGoogleAccount(new Error('Firebase အကောင့်ဝင်စနစ် ချိတ်ဆက်မရပါ။')); }
+        }, 10000);
+
+        function renderGoogleAccount(error) {
+            const label = document.getElementById('auth-label');
+            const inBtn = document.getElementById('google-signin-btn');
+            const outBtn = document.getElementById('google-signout-btn');
+            if (!label) return;
+            if (currentUser) {
+                label.textContent = 'ဝင်ထားသည် - ' + (currentUser.displayName || currentUser.email || 'Google အသုံးပြုသူ');
+                if (inBtn) inBtn.style.display = 'none';
+                if (outBtn) outBtn.style.display = 'inline-block';
+            } else {
+                label.textContent = error ? 'Google ဖြင့် ဝင်ရောက်ခြင်း မစတင်နိုင်ပါ။ အင်တာနက်နှင့် Firebase သတ်မှတ်ချက်ကို စစ်ဆေးပါ။' : 'သင့်ဒေတာကို ကိုယ့်အကောင့်နဲ့ သီးခြားသိမ်းဖို့ Google အကောင့်ဖြင့် ဝင်ပါ။';
+                if (inBtn) inBtn.style.display = 'inline-block';
+                if (outBtn) outBtn.style.display = 'none';
+            }
+        }
+        async function signInWithGoogle() {
+            if (!auth) { alert('Firebase အကောင့်ဝင်စနစ် မချိတ်ဆက်ရသေးပါ။ အင်တာနက်နှင့် Firebase သတ်မှတ်ချက်ကို စစ်ဆေးပါ။'); return; }
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            const btn = document.getElementById('google-signin-btn');
+            if (btn) { btn.disabled = true; btn.textContent = 'ဝင်နေပါသည်…'; }
+            try {
+                if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) { await auth.signInWithRedirect(provider); return; }
+                await auth.signInWithPopup(provider);
+            } catch (e) {
+                if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request')) {
+                    try { await auth.signInWithRedirect(provider); return; } catch (redirectError) { e = redirectError; }
+                }
+                console.error('Google sign-in failed:', e);
+                let msg = 'Google ဖြင့် ဝင်ရောက်ရာတွင် အမှားဖြစ်ပါသည်။';
+                if (e && e.code === 'auth/operation-not-allowed') msg = 'Firebase Console → Authentication → Sign-in method နေရာတွင် Google ကို ဖွင့်ထားပါ။';
+                else if (e && (e.code === 'auth/unauthorized-domain' || e.code === 'auth/operation-not-supported-in-this-environment')) msg = 'ဒီဝဘ်လိပ်စာကို Firebase Authentication → Settings → Authorized domains ထဲထည့်ပြီး HTTPS လိပ်စာနဲ့ ဖွင့်ပါ။';
+                else if (e && e.message) msg += '\n' + e.message;
+                alert(msg);
+            } finally { if (btn) { btn.disabled = false; btn.textContent = 'Google အကောင့်ဖြင့် ဝင်မည်'; } }
+        }
+        async function signOutGoogle() {
+            if (!auth || !currentUser) return;
+            if (!confirm('Google အကောင့်မှ ထွက်မလား? ဒီစက်ထဲက ဒေတာက အဲဒီအကောင့်အတွက် သီးခြားသိမ်းထားပါမယ်။')) return;
+            try { await auth.signOut(); } catch (e) { alert('ထွက်ရာတွင် အမှားဖြစ်ပါသည်: ' + (e.message || e)); }
+        }
+        function userJobsRef() {
+            if (!database || !currentUser) return null;
+            return database.ref('users/' + currentUser.uid + '/sgs_jobs');
+        }
 
         // ---- Cloud status badge + auto upload (debounced) ----
         let cloudTimer = null;
@@ -1026,6 +1150,7 @@ Important Rules for Extraction:
             if (!el) return;
             const map = {
                 off:      ['☁️ Cloud မချိတ်ရသေး', '#7f8c8d'],
+                auth:     ['🔐 Google အကောင့်ဖြင့် ဝင်ပြီးမှ Cloud နှင့် ချိတ်ဆက်နိုင်ပါမည်', '#7f8c8d'],
                 idle:     ['☁️ Connected', '#27ae60'],
                 synced:   ['☁️ Synced ✓', '#27ae60'],
                 pending:  ['⏳ တင်ရန် စောင့်နေ…', '#f39c12'],
@@ -1039,41 +1164,42 @@ Important Rules for Extraction:
             el.style.background = color;
             el.style.display = 'block';
         }
-        function isCloudAuto() { return localStorage.getItem('sgs_cloud_auto') !== '0'; }
+        function isCloudAuto() { return appStorage.getItem('sgs_cloud_auto') !== '0'; }
         function refreshCloudStatus() {
             if (!isFirebaseReady || !database) { setCloudStatus(getFirebaseUrl() ? 'error' : 'off', getFirebaseUrl() ? '(Firebase library မရ)' : ''); return; }
+            if (!currentUser) { setCloudStatus('auth'); return; }
             if (!isCloudAuto()) { setCloudStatus('paused'); return; }
             setCloudStatus(cloudOnline === false ? 'offline' : 'idle');
         }
         function scheduleCloudUpload(isTypedInput) {
-            if (!isFirebaseReady || !database || !isCloudAuto()) return;
+            if (!isFirebaseReady || !database || !currentUser || !isCloudAuto()) return;
             if (!isTypedInput && typeof applyingRemoteUntil !== 'undefined' && Date.now() < applyingRemoteUntil) return;
             const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
             if (!jobNo) return;
             setCloudStatus('pending');
             lastLocalEditAt = Date.now();
-            try { localStorage.setItem('sgs_cloud_dirty_' + cloudKey(jobNo), String(lastLocalEditAt)); } catch (e) {}
+            try { appStorage.setItem('sgs_cloud_dirty_' + cloudKey(jobNo), String(lastLocalEditAt)); } catch (e) {}
             clearTimeout(cloudTimer);
             cloudTimer = setTimeout(() => { cloudTimer = null; doCloudUpload(); }, 3000);
         }
         function doCloudUpload() {
-            if (!isFirebaseReady || !database) return;
+            if (!isFirebaseReady || !database || !currentUser) return;
             const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
             if (!jobNo) return;
             try { saveToStorage(); } catch (e) {}
             const jobData = buildJobData();
             try {
-                const saved = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+                const saved = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
                 saved[jobNo] = jobData;
-                localStorage.setItem('sgs_saved_jobs', JSON.stringify(saved));
+                appStorage.setItem('sgs_saved_jobs', JSON.stringify(saved));
             } catch (e) {}
             setCloudStatus('uploading');
             const upKey = cloudKey(jobNo), sentAt = jobData.updatedAt;
-            database.ref('sgs_jobs/' + upKey).set(jobData)
+            userJobsRef().child(upKey).set(jobData)
                 .then(() => {
                     try {
-                        localStorage.setItem('sgs_cloud_applied_' + upKey, String(sentAt));
-                        if (lastLocalEditAt <= sentAt) localStorage.removeItem('sgs_cloud_dirty_' + upKey);
+                        appStorage.setItem('sgs_cloud_applied_' + upKey, String(sentAt));
+                        if (lastLocalEditAt <= sentAt) appStorage.removeItem('sgs_cloud_dirty_' + upKey);
                     } catch (e) {}
                     const t = new Date(); setCloudStatus('synced', `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`); })
                 .catch(err => { console.warn('Cloud upload failed:', err); setCloudStatus('error', '(' + (err && err.code ? err.code : 'upload') + ')'); });
@@ -1111,7 +1237,7 @@ Important Rules for Extraction:
             // device's update can never be mistaken for a local edit and bounce straight back.
             applyingRemoteUntil = Date.now() + 1500;
             try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
-            const set = (k, v) => localStorage.setItem(k, v);
+            const set = (k, v) => appStorage.setItem(k, v);
             set('sgs_app_data_final', job.appData || '{}');
             set('sgs_vgm_overrides', job.vgmData || '{}');
             set('sgs_custom_cols', job.customCols || '[]');
@@ -1142,11 +1268,11 @@ Important Rules for Extraction:
         }
         function handleRemoteJob(job, key) {
             if (!job || typeof job !== 'object' || !job.appData) return;
-            const applied = Number(localStorage.getItem('sgs_cloud_applied_' + key)) || 0;
+            const applied = Number(appStorage.getItem('sgs_cloud_applied_' + key)) || 0;
             const remoteTs = Number(job.updatedAt) || 0;
-            if (job.device === CLOUD_DEVICE_ID) { try { localStorage.setItem('sgs_cloud_applied_' + key, String(remoteTs)); } catch (e) {} return; }
+            if (job.device === CLOUD_DEVICE_ID) { try { appStorage.setItem('sgs_cloud_applied_' + key, String(remoteTs)); } catch (e) {} return; }
             if (remoteTs && remoteTs <= applied) return;
-            const dirty = Number(localStorage.getItem('sgs_cloud_dirty_' + key)) || 0;
+            const dirty = Number(appStorage.getItem('sgs_cloud_dirty_' + key)) || 0;
             if (cloudTimer || (dirty && dirty > remoteTs)) return; // this device has newer edits waiting to upload
             if (userIsTyping()) {
                 pendingRemoteJob = { job, key };
@@ -1156,20 +1282,20 @@ Important Rules for Extraction:
             }
             try {
                 applyCloudJob(job);
-                localStorage.setItem('sgs_cloud_applied_' + key, String(remoteTs));
+                appStorage.setItem('sgs_cloud_applied_' + key, String(remoteTs));
                 const t = new Date();
                 setCloudStatus('synced', `(Updated ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')})`);
             } catch (e) { console.warn('Applying cloud update failed:', e); setCloudStatus('error', '(apply)'); }
         }
         function attachCloudListener() {
-            if (!isFirebaseReady || !database) return;
+            if (!isFirebaseReady || !database || !currentUser) return;
             const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
             const key = cloudKey(jobNo);
             if (cloudListenerRef && cloudListenerKey === key) return;
             if (cloudListenerRef) { try { cloudListenerRef.off(); } catch (e) {} cloudListenerRef = null; cloudListenerKey = ''; }
             if (!jobNo || !isCloudLive()) return;
             cloudListenerKey = key;
-            cloudListenerRef = database.ref('sgs_jobs/' + key);
+            cloudListenerRef = userJobsRef().child(key);
             cloudListenerRef.on('value', snap => handleRemoteJob(snap.val(), key), err => { console.warn('Live listener error:', err); setCloudStatus('error', '(listen)'); });
         }
         window.addEventListener('load', () => { setTimeout(attachCloudListener, 300); });
@@ -1180,18 +1306,13 @@ Important Rules for Extraction:
             const out = document.getElementById('tg-firebase-test-result');
             const url = normaliseFirebaseUrl(document.getElementById('tg-firebase-url').value);
             const show = (msg, ok) => { out.style.color = ok ? '#27ae60' : '#c0392b'; out.textContent = msg; };
-            if (!url) { show('⚠️ Firebase URL ထည့်ပါ။', false); return; }
-            show('⏳ စမ်းနေပါသည်…', true);
-            const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 8000);
-            fetch(url + '/sgs_jobs.json?shallow=true', { signal: ctl.signal })
-                .then(r => {
-                    clearTimeout(timer);
-                    if (r.ok) show('✅ ချိတ်ဆက်မှု အောင်မြင်ပါသည်။', true);
-                    else if (r.status === 401 || r.status === 403) show('⚠️ URL မှန်ပါတယ်၊ ဒါပေမဲ့ Rules က sgs_jobs ကို ဖတ်ခွင့်မပေးထားပါ။ Firebase Console > Realtime Database > Rules မှာ ပြင်ပြီး Publish နှိပ်ပါ။', false);
-                    else if (r.status === 404) show('❌ ဒီ URL မှာ Database မတွေ့ပါ။ URL ကို ပြန်စစ်ပါ။', false);
-                    else show('❌ Error ' + r.status, false);
-                })
-                .catch(() => { clearTimeout(timer); show('❌ မချိတ်ဆက်နိုင်ပါ။ URL သို့မဟုတ် Internet ကို စစ်ပါ။', false); });
+            if (!url) { show('⚠️ Firebase URL မသတ်မှတ်ရသေးပါ။', false); return; }
+            if (!currentUser) { show('🔐 အရင်ဆုံး Google အကောင့်ဖြင့် ဝင်ပါ။', false); return; }
+            show('⏳ ချိတ်ဆက်မှုကို စစ်ဆေးနေပါသည်…', true);
+            database.ref('.info/connected').once('value').then(snap => {
+                if (snap.val()) show('✅ Firebase ချိတ်ဆက်မှု ရှိပါသည်။ ကိုယ်ပိုင်ဒေတာအတွက် UID စည်းမျဉ်း အသုံးပြုပါမည်။', true);
+                else show('❌ Firebase Database ကို ချိတ်ဆက်မရပါ။ URL နှင့် အင်တာနက်ကို စစ်ဆေးပါ။', false);
+            }).catch(err => show('❌ ချိတ်ဆက်မှုအမှား: ' + (err.code || err.message || 'unknown'), false));
         }
 
         if ('serviceWorker' in navigator) {
@@ -1219,20 +1340,20 @@ Important Rules for Extraction:
             }
         }
 
-        vgmOverrides = safeParseJSON(localStorage.getItem('sgs_vgm_overrides'), {});
+        vgmOverrides = safeParseJSON(appStorage.getItem('sgs_vgm_overrides'), {});
         let isVgmEditing = false;
         let customColumns = []; 
-        let loadedCols = safeParseJSON(localStorage.getItem('sgs_custom_cols'), []);
+        let loadedCols = safeParseJSON(appStorage.getItem('sgs_custom_cols'), []);
         if (Array.isArray(loadedCols) && loadedCols.length > 0) customColumns = loadedCols;
 
         let fixedHeadings = [...DEFAULT_FIXED_HEADINGS];
-        let loadedHeadings = safeParseJSON(localStorage.getItem('sgs_fixed_headings'), []);
+        let loadedHeadings = safeParseJSON(appStorage.getItem('sgs_fixed_headings'), []);
         if (Array.isArray(loadedHeadings) && loadedHeadings.length === fixedHeadings.length) fixedHeadings = loadedHeadings;
         let showHeaderTools = false;
 
         function updateFixedHeading(idx, val) {
             fixedHeadings[idx] = val;
-            localStorage.setItem('sgs_fixed_headings', JSON.stringify(fixedHeadings));
+            appStorage.setItem('sgs_fixed_headings', JSON.stringify(fixedHeadings));
             saveToStorage();
             // Optional: generateDynamicContent() to refresh UI if needed
         }
@@ -1247,7 +1368,7 @@ Important Rules for Extraction:
             // This prevents a header-only delete from clearing every remaining column's data.
             saveToStorage();
             fixedHeadings[idx] = ""; // Hide only the selected fixed column.
-            localStorage.setItem('sgs_fixed_headings', JSON.stringify(fixedHeadings));
+            appStorage.setItem('sgs_fixed_headings', JSON.stringify(fixedHeadings));
 
             // Rebuild the visible columns, then restore all saved values for the columns that remain.
             loadFromStorage();
@@ -1255,7 +1376,7 @@ Important Rules for Extraction:
 
         function updateCustomHeading(idx, val) {
             customColumns[idx] = val;
-            localStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns));
+            appStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns));
             saveToStorage();
         }
 
@@ -1307,7 +1428,7 @@ Important Rules for Extraction:
             if (suppressAutoSave) return;
             let existingData;
             try {
-                existingData = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
+                existingData = safeParseJSON(appStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
             } catch (storageReadError) {
                 console.warn('Unable to read saved app data:', storageReadError);
                 existingData = { inputs: {}, tallies: {} };
@@ -1334,16 +1455,16 @@ Important Rules for Extraction:
                 data.photo = photoSrc;
             }
             try {
-                localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
-                localStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns));
-                localStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
+                appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+                appStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns));
+                appStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
             } catch (storageWriteError) {
                 console.error('Unable to save app data. Browser storage may be full or disabled:', storageWriteError);
             }
         }
 
         function loadFromStorage() {
-            let saved = localStorage.getItem('sgs_app_data_final');
+            let saved = appStorage.getItem('sgs_app_data_final');
             if(!saved || saved === "undefined" || saved === '""' || saved === "{}") {
                 setTodayDate(); generateDynamicContent(); return;
             }
@@ -1356,13 +1477,13 @@ Important Rules for Extraction:
                 let el = document.getElementById('noOfCtn');
                 if (el) { el.value = data.inputs['noOfCtn']; el.setAttribute('value', data.inputs['noOfCtn']); }
             }
-            const savedTallyCols = safeParseJSON(localStorage.getItem('sgs_tally_tab_cols'), DEFAULT_TALLY_TAB_COLUMNS);
+            const savedTallyCols = safeParseJSON(appStorage.getItem('sgs_tally_tab_cols'), DEFAULT_TALLY_TAB_COLUMNS);
             if (Array.isArray(savedTallyCols) && savedTallyCols.length > 0) {
                 tallyTabColumns = savedTallyCols.map((v, i) => String(v || (i + 1)));
             } else {
                 tallyTabColumns = [...DEFAULT_TALLY_TAB_COLUMNS];
             }
-            const savedTallyMode = localStorage.getItem('sgs_tally_mode');
+            const savedTallyMode = appStorage.getItem('sgs_tally_mode');
             tallyTabMode = ['Bags','In Bulk','In Bulk & Bags'].includes(savedTallyMode) ? savedTallyMode : DEFAULT_TALLY_MODE;
             generateDynamicContent();
             
@@ -1427,14 +1548,14 @@ Important Rules for Extraction:
             let d = new Date();
             let dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             return {
-                appData: localStorage.getItem('sgs_app_data_final') || "{}",
-                vgmData: localStorage.getItem('sgs_vgm_overrides') || "{}",
-                customCols: localStorage.getItem('sgs_custom_cols') || "[]",
+                appData: appStorage.getItem('sgs_app_data_final') || "{}",
+                vgmData: appStorage.getItem('sgs_vgm_overrides') || "{}",
+                customCols: appStorage.getItem('sgs_custom_cols') || "[]",
                 fixedHeadings: JSON.stringify(fixedHeadings),
-                tallyTabCols: localStorage.getItem('sgs_tally_tab_cols') || JSON.stringify(tallyTabColumns),
+                tallyTabCols: appStorage.getItem('sgs_tally_tab_cols') || JSON.stringify(tallyTabColumns),
                 tallyMode: tallyTabMode,
-                tallyExtraRows: localStorage.getItem('sgs_tally_extra_rows') || '[]',
-                sirPkgs: localStorage.getItem('sir_packages') || "[]",
+                tallyExtraRows: appStorage.getItem('sgs_tally_extra_rows') || '[]',
+                sirPkgs: appStorage.getItem('sir_packages') || "[]",
                 date: dateStr,
                 device: CLOUD_DEVICE_ID,
                 updatedAt: Date.now()
@@ -1445,17 +1566,17 @@ Important Rules for Extraction:
             let jobNo = document.getElementById('job-no-input').value.trim();
             if(!jobNo) { alert("⚠️ Job No အရင်ဖြည့်ပါ"); return; }
             saveToStorage(); 
-            let savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+            let savedJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
             let d = new Date();
             let dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             
             let jobData = buildJobData();
 
             savedJobs[jobNo] = jobData;
-            localStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
+            appStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
 
-            if (isFirebaseReady && database) {
-                database.ref('sgs_jobs/' + cloudKey(jobNo)).set(jobData)
+            if (isFirebaseReady && database && currentUser) {
+                userJobsRef().child(cloudKey(jobNo)).set(jobData)
                 .then(() => { alert("✅ Job No: [" + jobNo + "] ကို ဖုန်းနှင့် Cloud သို့ သိမ်းဆည်းပြီးပါပြီ။"); })
                 .catch((error) => { alert("⚠️ ဖုန်းထဲတွင်သာ သိမ်းဆည်းပြီးပါပြီ။ (Cloud သို့ မရောက်သေးပါ)"); });
             } else {
@@ -1504,24 +1625,24 @@ Important Rules for Extraction:
             // the rendered/editable VGM controls to prevent old rows from remaining visible.
             vgmOverrides = {};
             isVgmEditing = false;
-            localStorage.removeItem('sgs_vgm_overrides');
+            appStorage.removeItem('sgs_vgm_overrides');
             const vgmAreaReset = document.getElementById('vgmDetailsArea');
             if (vgmAreaReset) vgmAreaReset.innerHTML = '';
 
             // Reset SIR Template Other Packages: start with no items; use "Add Item" when needed.
             sirPackages = [];
-            localStorage.setItem('sir_packages', JSON.stringify(sirPackages));
+            appStorage.setItem('sir_packages', JSON.stringify(sirPackages));
             renderSirPackages();
 
             // Reset column schema to defaults for new job
             fixedHeadings = [...DEFAULT_FIXED_HEADINGS];
             customColumns = [];
             tallyTabColumns = [...DEFAULT_TALLY_TAB_COLUMNS];
-            localStorage.removeItem('sgs_app_data_final'); 
-            localStorage.removeItem('sgs_vgm_overrides');
-            localStorage.removeItem('sgs_custom_cols');
-            localStorage.removeItem('sgs_fixed_headings');
-            localStorage.removeItem('sgs_tally_tab_cols');
+            appStorage.removeItem('sgs_app_data_final'); 
+            appStorage.removeItem('sgs_vgm_overrides');
+            appStorage.removeItem('sgs_custom_cols');
+            appStorage.removeItem('sgs_fixed_headings');
+            appStorage.removeItem('sgs_tally_tab_cols');
             setTodayDate();
             generateDynamicContent();
         }
@@ -1529,16 +1650,16 @@ Important Rules for Extraction:
         function clearAppData() { if(confirm("လက်ရှိ Form ကို ရှင်းလင်းမှာ သေချာပါသလား?")) clearFormOnly(); }
 
         function openLoadModal() {
-            let savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+            let savedJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
             let listContainer = document.getElementById('savedJobsList');
             
-            if (isFirebaseReady && database) {
+            if (isFirebaseReady && database && currentUser) {
                 listContainer.innerHTML = '<p style="text-align:center; padding: 20px;">🔄 Cloud မှ ဒေတာများ ရှာဖွေနေပါသည်...</p>';
-                database.ref('sgs_jobs').once('value').then((snapshot) => {
+                userJobsRef().once('value').then((snapshot) => {
                     let cloudJobs = snapshot.val() || {};
                     // Keep local-only jobs; cloud entries take precedence only for matching keys.
                     const mergedJobs = Object.assign({}, savedJobs, cloudJobs);
-                    localStorage.setItem('sgs_saved_jobs', JSON.stringify(mergedJobs));
+                    appStorage.setItem('sgs_saved_jobs', JSON.stringify(mergedJobs));
                     renderJobsList(mergedJobs);
                 }).catch((error) => {
                     renderJobsList(savedJobs, true);
@@ -1573,32 +1694,32 @@ Important Rules for Extraction:
 
         function loadJobFromDB(jobNo) {
             if(confirm("[" + jobNo + "] ကို ဖွင့်မှာ သေချာပါသလား?")) {
-                let savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+                let savedJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
                 if(savedJobs[jobNo]) {
-                    localStorage.setItem('sgs_app_data_final', savedJobs[jobNo].appData || "{}");
-                    localStorage.setItem('sgs_vgm_overrides', savedJobs[jobNo].vgmData || "{}");
-                    localStorage.setItem('sgs_custom_cols', savedJobs[jobNo].customCols || "[]");
+                    appStorage.setItem('sgs_app_data_final', savedJobs[jobNo].appData || "{}");
+                    appStorage.setItem('sgs_vgm_overrides', savedJobs[jobNo].vgmData || "{}");
+                    appStorage.setItem('sgs_custom_cols', savedJobs[jobNo].customCols || "[]");
                     if(savedJobs[jobNo].fixedHeadings) {
-                        localStorage.setItem('sgs_fixed_headings', savedJobs[jobNo].fixedHeadings);
+                        appStorage.setItem('sgs_fixed_headings', savedJobs[jobNo].fixedHeadings);
                     }
                     if(savedJobs[jobNo].tallyTabCols) {
-                        localStorage.setItem('sgs_tally_tab_cols', savedJobs[jobNo].tallyTabCols);
+                        appStorage.setItem('sgs_tally_tab_cols', savedJobs[jobNo].tallyTabCols);
                     }
-                    localStorage.setItem('sgs_tally_extra_rows', savedJobs[jobNo].tallyExtraRows || '[]');
+                    appStorage.setItem('sgs_tally_extra_rows', savedJobs[jobNo].tallyExtraRows || '[]');
                     if(savedJobs[jobNo].tallyMode) {
-                        localStorage.setItem('sgs_tally_mode', savedJobs[jobNo].tallyMode);
+                        appStorage.setItem('sgs_tally_mode', savedJobs[jobNo].tallyMode);
                         tallyTabMode = savedJobs[jobNo].tallyMode;
                     }
                     
                     if(savedJobs[jobNo].sirPkgs) {
-                        localStorage.setItem('sir_packages', savedJobs[jobNo].sirPkgs);
+                        appStorage.setItem('sir_packages', savedJobs[jobNo].sirPkgs);
                     } else if (savedJobs[jobNo].otherPkgs) {
-                        localStorage.setItem('sir_packages', savedJobs[jobNo].otherPkgs);
+                        appStorage.setItem('sir_packages', savedJobs[jobNo].otherPkgs);
                     }
                     
                     // Start the SIR view fresh from the loaded Surveyor Notes data, and stop the old form
                     // from being saved over it while the page reloads.
-                    try { localStorage.removeItem(SIR_FORM_STATE_KEY); localStorage.setItem('sgs_cloud_applied_' + cloudKey(jobNo), String(savedJobs[jobNo].updatedAt || 0)); } catch (e) {}
+                    try { appStorage.removeItem(SIR_FORM_STATE_KEY); appStorage.setItem('sgs_cloud_applied_' + cloudKey(jobNo), String(savedJobs[jobNo].updatedAt || 0)); } catch (e) {}
                     suppressAutoSave = true;
                     clearTimeout(cloudTimer);
                     location.reload(); 
@@ -1608,10 +1729,10 @@ Important Rules for Extraction:
 
         function deleteJobFromDB(jobNo) {
             if(confirm("Delete Job [" + jobNo + "]?")) {
-                let savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+                let savedJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
                 delete savedJobs[jobNo];
-                localStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
-                if (isFirebaseReady && database) { database.ref('sgs_jobs/' + cloudKey(jobNo)).remove().catch(()=>{}); }
+                appStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
+                if (isFirebaseReady && database && currentUser) { userJobsRef().child(cloudKey(jobNo)).remove().catch(()=>{}); }
                 openLoadModal();
             }
         }
@@ -1695,8 +1816,8 @@ Important Rules for Extraction:
         }
 
         function sendToTelegramBot() {
-            let tgToken = localStorage.getItem('sgs_tg_token');
-            let tgChatId = localStorage.getItem('sgs_tg_chat_id');
+            let tgToken = appStorage.getItem('sgs_tg_token');
+            let tgChatId = appStorage.getItem('sgs_tg_chat_id');
             
             if (!tgToken || !tgChatId) {
                 alert("⚠️ ကျေးဇူးပြု၍ Telegram Setting အရင်ထည့်သွင်းပေးပါ။");
@@ -1755,20 +1876,20 @@ Important Rules for Extraction:
             
             let fullData = {
                 sgs_version: "12.0_40FCL_AutoVGM_Tally",
-                sgs_app_data_final: localStorage.getItem('sgs_app_data_final') || "{}",
-                sgs_vgm_overrides: localStorage.getItem('sgs_vgm_overrides') || "{}",
-                sgs_custom_cols: localStorage.getItem('sgs_custom_cols') || "[]",
-                sgs_tally_tab_cols: localStorage.getItem('sgs_tally_tab_cols') || JSON.stringify(tallyTabColumns),
-                sgs_tally_extra_rows: localStorage.getItem('sgs_tally_extra_rows') || '[]',
-                sgs_tally_default_bags: localStorage.getItem('sgs_tally_default_bags') || String(tallyDefaultBags),
+                sgs_app_data_final: appStorage.getItem('sgs_app_data_final') || "{}",
+                sgs_vgm_overrides: appStorage.getItem('sgs_vgm_overrides') || "{}",
+                sgs_custom_cols: appStorage.getItem('sgs_custom_cols') || "[]",
+                sgs_tally_tab_cols: appStorage.getItem('sgs_tally_tab_cols') || JSON.stringify(tallyTabColumns),
+                sgs_tally_extra_rows: appStorage.getItem('sgs_tally_extra_rows') || '[]',
+                sgs_tally_default_bags: appStorage.getItem('sgs_tally_default_bags') || String(tallyDefaultBags),
                 sgs_tally_mode: tallyTabMode,
-                sgs_fixed_headings: localStorage.getItem('sgs_fixed_headings') || JSON.stringify(fixedHeadings),
-                sir_generator_form_state: localStorage.getItem(SIR_FORM_STATE_KEY) || '',
-                sirTemplateBase64: localStorage.getItem('sirTemplateBase64') || '',
-                sirUserUploadedTemplate: localStorage.getItem('sirUserUploadedTemplate') || '',
-                sirUserUploadedTemplateVersion: localStorage.getItem('sirUserUploadedTemplateVersion') || '',
-                sir_packages: localStorage.getItem('sir_packages') || "[]",
-                sgs_saved_jobs: localStorage.getItem('sgs_saved_jobs') || "{}"
+                sgs_fixed_headings: appStorage.getItem('sgs_fixed_headings') || JSON.stringify(fixedHeadings),
+                sir_generator_form_state: appStorage.getItem(SIR_FORM_STATE_KEY) || '',
+                sirTemplateBase64: appStorage.getItem('sirTemplateBase64') || '',
+                sirUserUploadedTemplate: appStorage.getItem('sirUserUploadedTemplate') || '',
+                sirUserUploadedTemplateVersion: appStorage.getItem('sirUserUploadedTemplateVersion') || '',
+                sir_packages: appStorage.getItem('sir_packages') || "[]",
+                sgs_saved_jobs: appStorage.getItem('sgs_saved_jobs') || "{}"
             };
             
             let jsonString = JSON.stringify(fullData, null, 2);
@@ -1784,26 +1905,26 @@ Important Rules for Extraction:
                     let data = JSON.parse(e.target.result);
                     if (typeof data === 'string') data = JSON.parse(data);
                     
-                    if(data.sgs_app_data_final) localStorage.setItem('sgs_app_data_final', typeof data.sgs_app_data_final === 'object' ? JSON.stringify(data.sgs_app_data_final) : data.sgs_app_data_final);
-                    if(data.sgs_vgm_overrides) localStorage.setItem('sgs_vgm_overrides', typeof data.sgs_vgm_overrides === 'object' ? JSON.stringify(data.sgs_vgm_overrides) : data.sgs_vgm_overrides);
-                    if(data.sgs_custom_cols) localStorage.setItem('sgs_custom_cols', typeof data.sgs_custom_cols === 'object' ? JSON.stringify(data.sgs_custom_cols) : data.sgs_custom_cols);
+                    if(data.sgs_app_data_final) appStorage.setItem('sgs_app_data_final', typeof data.sgs_app_data_final === 'object' ? JSON.stringify(data.sgs_app_data_final) : data.sgs_app_data_final);
+                    if(data.sgs_vgm_overrides) appStorage.setItem('sgs_vgm_overrides', typeof data.sgs_vgm_overrides === 'object' ? JSON.stringify(data.sgs_vgm_overrides) : data.sgs_vgm_overrides);
+                    if(data.sgs_custom_cols) appStorage.setItem('sgs_custom_cols', typeof data.sgs_custom_cols === 'object' ? JSON.stringify(data.sgs_custom_cols) : data.sgs_custom_cols);
                     const backupValue = (value) => typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
-                    if(data.sgs_tally_tab_cols !== undefined) localStorage.setItem('sgs_tally_tab_cols', backupValue(data.sgs_tally_tab_cols));
-                    if(data.sgs_tally_extra_rows !== undefined) { localStorage.setItem('sgs_tally_extra_rows', backupValue(data.sgs_tally_extra_rows)); saveTallyExtraRows(safeParseJSON(data.sgs_tally_extra_rows, [])); }
-                    if(data.sgs_tally_default_bags !== undefined) { localStorage.setItem('sgs_tally_default_bags', backupValue(data.sgs_tally_default_bags)); tallyDefaultBags = Math.max(0, Number(data.sgs_tally_default_bags) || 0); }
-                    if(data.sgs_tally_mode) { localStorage.setItem('sgs_tally_mode', data.sgs_tally_mode); tallyTabMode = data.sgs_tally_mode; }
-                    if(data.sgs_fixed_headings !== undefined) { localStorage.setItem('sgs_fixed_headings', backupValue(data.sgs_fixed_headings)); fixedHeadings = safeParseJSON(data.sgs_fixed_headings, fixedHeadings); }
-                    if(data.sir_generator_form_state) localStorage.setItem(SIR_FORM_STATE_KEY, backupValue(data.sir_generator_form_state));
+                    if(data.sgs_tally_tab_cols !== undefined) appStorage.setItem('sgs_tally_tab_cols', backupValue(data.sgs_tally_tab_cols));
+                    if(data.sgs_tally_extra_rows !== undefined) { appStorage.setItem('sgs_tally_extra_rows', backupValue(data.sgs_tally_extra_rows)); saveTallyExtraRows(safeParseJSON(data.sgs_tally_extra_rows, [])); }
+                    if(data.sgs_tally_default_bags !== undefined) { appStorage.setItem('sgs_tally_default_bags', backupValue(data.sgs_tally_default_bags)); tallyDefaultBags = Math.max(0, Number(data.sgs_tally_default_bags) || 0); }
+                    if(data.sgs_tally_mode) { appStorage.setItem('sgs_tally_mode', data.sgs_tally_mode); tallyTabMode = data.sgs_tally_mode; }
+                    if(data.sgs_fixed_headings !== undefined) { appStorage.setItem('sgs_fixed_headings', backupValue(data.sgs_fixed_headings)); fixedHeadings = safeParseJSON(data.sgs_fixed_headings, fixedHeadings); }
+                    if(data.sir_generator_form_state) appStorage.setItem(SIR_FORM_STATE_KEY, backupValue(data.sir_generator_form_state));
                     ['sirTemplateBase64','sirUserUploadedTemplate','sirUserUploadedTemplateVersion'].forEach(key => {
-                        if (data[key] !== undefined && data[key] !== '') localStorage.setItem(key, backupValue(data[key]));
+                        if (data[key] !== undefined && data[key] !== '') appStorage.setItem(key, backupValue(data[key]));
                     });
                     
                     let pkgs = data.sir_packages !== undefined ? data.sir_packages : data.sgs_other_packages;
                     if (pkgs !== undefined) {
-                        localStorage.setItem('sir_packages', typeof pkgs === 'object' ? JSON.stringify(pkgs) : pkgs);
+                        appStorage.setItem('sir_packages', typeof pkgs === 'object' ? JSON.stringify(pkgs) : pkgs);
                     }
                     
-                    if(data.sgs_saved_jobs) localStorage.setItem('sgs_saved_jobs', typeof data.sgs_saved_jobs === 'object' ? JSON.stringify(data.sgs_saved_jobs) : data.sgs_saved_jobs);
+                    if(data.sgs_saved_jobs) appStorage.setItem('sgs_saved_jobs', typeof data.sgs_saved_jobs === 'object' ? JSON.stringify(data.sgs_saved_jobs) : data.sgs_saved_jobs);
                     
                     // Rebuild both app views immediately so restored values are visible without
                     // relying on a browser reload or stale DOM controls.
@@ -1819,11 +1940,11 @@ Important Rules for Extraction:
 
         function openTelegramSettings() {
             try {
-                let tk = localStorage.getItem('sgs_tg_token') || "";
-                let id = localStorage.getItem('sgs_tg_chat_id') || "";
+                let tk = appStorage.getItem('sgs_tg_token') || "";
+                let id = appStorage.getItem('sgs_tg_chat_id') || "";
                 document.getElementById('tg-token-input').value = tk;
                 document.getElementById('tg-chatid-input').value = id;
-                document.getElementById('tg-firebase-url').value = localStorage.getItem('sgs_firebase_url') || '';
+                document.getElementById('tg-firebase-url').value = firebaseConfig.databaseURL;
                 document.getElementById('tg-firebase-auto').checked = isCloudAuto();
                 document.getElementById('tg-firebase-live').checked = isCloudLive();
                 document.getElementById('tg-firebase-test-result').textContent = '';
@@ -1836,13 +1957,14 @@ Important Rules for Extraction:
         function saveTelegramSettings() {
             let token = document.getElementById('tg-token-input').value.trim();
             let chatId = document.getElementById('tg-chatid-input').value.trim();
-            localStorage.setItem('sgs_tg_token', token);
-            localStorage.setItem('sgs_tg_chat_id', chatId);
+            appStorage.setItem('sgs_tg_token', token);
+            appStorage.setItem('sgs_tg_chat_id', chatId);
             const oldUrl = getFirebaseUrl();
-            const newUrl = normaliseFirebaseUrl(document.getElementById('tg-firebase-url').value);
-            localStorage.setItem('sgs_firebase_url', newUrl);
-            localStorage.setItem('sgs_cloud_auto', document.getElementById('tg-firebase-auto').checked ? '1' : '0');
-            localStorage.setItem('sgs_cloud_live', document.getElementById('tg-firebase-live').checked ? '1' : '0');
+            const newUrl = normaliseFirebaseUrl(document.getElementById('tg-firebase-url').value || firebaseConfig.databaseURL);
+            if (newUrl !== normaliseFirebaseUrl(firebaseConfig.databaseURL)) { alert('ဒီ app ကို ဒီ Firebase Project နဲ့ပဲ ချိတ်ဆက်ထားပါတယ်။ အခြား Database URL ကို မသုံးပါနှင့်။'); return; }
+            appStorage.setItem('sgs_firebase_url', newUrl);
+            appStorage.setItem('sgs_cloud_auto', document.getElementById('tg-firebase-auto').checked ? '1' : '0');
+            appStorage.setItem('sgs_cloud_live', document.getElementById('tg-firebase-live').checked ? '1' : '0');
             closeTelegramSettings();
             if (newUrl !== oldUrl) {
                 alert("✅ Settings မှတ်သားပြီးပါပြီ။ Firebase URL ပြောင်းထားလို့ App ကို ပြန်စပါမည်။");
@@ -1856,8 +1978,8 @@ Important Rules for Extraction:
         }
 
         function syncToTelegramCloud() {
-            let tgToken = localStorage.getItem('sgs_tg_token');
-            let tgChatId = localStorage.getItem('sgs_tg_chat_id');
+            let tgToken = appStorage.getItem('sgs_tg_token');
+            let tgChatId = appStorage.getItem('sgs_tg_chat_id');
             
             if (!tgToken || !tgChatId) {
                 alert("⚠️ ကျေးဇူးပြု၍ ⚙️ Settings ခလုတ်ကို နှိပ်ပြီး Telegram Bot Token နှင့် Chat ID အရင်ထည့်သွင်းပေးပါခင်ဗျာ။");
@@ -1875,11 +1997,11 @@ Important Rules for Extraction:
 
             let backupObj = {
                 sgs_version: "11.0_40FCL_AutoVGM",
-                sgs_app_data_final: safeParseJSON(localStorage.getItem('sgs_app_data_final'), {}),
-                sgs_vgm_overrides: safeParseJSON(localStorage.getItem('sgs_vgm_overrides'), {}),
-                sgs_custom_cols: safeParseJSON(localStorage.getItem('sgs_custom_cols'), []),
-                sir_packages: safeParseJSON(localStorage.getItem('sir_packages'), []),
-                sgs_saved_jobs: safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {})
+                sgs_app_data_final: safeParseJSON(appStorage.getItem('sgs_app_data_final'), {}),
+                sgs_vgm_overrides: safeParseJSON(appStorage.getItem('sgs_vgm_overrides'), {}),
+                sgs_custom_cols: safeParseJSON(appStorage.getItem('sgs_custom_cols'), []),
+                sir_packages: safeParseJSON(appStorage.getItem('sir_packages'), []),
+                sgs_saved_jobs: safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {})
             };
             let fileBlob = new Blob([JSON.stringify(backupObj, null, 2)], {type: "application/json"});
             
@@ -1928,7 +2050,7 @@ Important Rules for Extraction:
             listContainer.innerHTML = ''; 
             if(!query) return;
 
-            let savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+            let savedJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
             let foundCount = 0;
 
             Object.keys(savedJobs).forEach(jobNo => {
@@ -2001,12 +2123,12 @@ Important Rules for Extraction:
         }
 
         function getTallyExtraRows() {
-            const rows = safeParseJSON(localStorage.getItem('sgs_tally_extra_rows'), []);
+            const rows = safeParseJSON(appStorage.getItem('sgs_tally_extra_rows'), []);
             return Array.isArray(rows) ? rows : [];
         }
 
         function saveTallyExtraRows(rows) {
-            localStorage.setItem('sgs_tally_extra_rows', JSON.stringify(Array.isArray(rows) ? rows : []));
+            appStorage.setItem('sgs_tally_extra_rows', JSON.stringify(Array.isArray(rows) ? rows : []));
         }
 
         function getTallyExtraRowLabel(row, fallbackIndex = 1) {
@@ -2038,7 +2160,7 @@ Important Rules for Extraction:
             ensureTallyTabColumns();
 
             const noOfCtn = Math.max(1, Math.min(MAX_FCL, parseInt(document.getElementById('noOfCtn')?.value) || 1));
-            const saved = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
+            const saved = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
             const inputs = saved.inputs || {};
             const extraRows = getTallyExtraRows();
 
@@ -2147,11 +2269,11 @@ Important Rules for Extraction:
                 </div>
             </div>`;
 
-            const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
+            const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
             data.inputs = data.inputs || {};
             for (let i = 1; i <= noOfCtn; i++) data.inputs[`tallytab-mode-${i}`] = tallyTabMode;
             extraRows.forEach(r => data.inputs[`tallytab-extra-mode-${r.id}`] = tallyTabMode);
-            localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+            appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
             updateTallyTabTotals();
         }
 
@@ -2170,10 +2292,10 @@ Important Rules for Extraction:
                 rows.push({ id: nextId++, afterContainer });
             });
             saveTallyExtraRows(rows);
-            const savedData = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
+            const savedData = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
             savedData.inputs = savedData.inputs || {};
             savedData.tallyExtraRows = rows;
-            localStorage.setItem('sgs_app_data_final', JSON.stringify(savedData));
+            appStorage.setItem('sgs_app_data_final', JSON.stringify(savedData));
             renderTallyTab();
             saveToStorage();
         }
@@ -2194,12 +2316,12 @@ Important Rules for Extraction:
                 if (matches.length) {
                     const victim = matches[matches.length - 1];
                     rows = rows.filter(r => String(r.id) !== String(victim.id));
-                    const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
+                    const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
                     data.inputs = data.inputs || {};
                     const prefix = `tallytab-extra-${victim.id}-`;
                     const addKey = `tallytab-extra-add-${victim.id}`;
                     Object.keys(data.inputs).forEach(k => { if (k.startsWith(prefix) || k === addKey) delete data.inputs[k]; });
-                    localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+                    appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
                     removed++;
                 }
             });
@@ -2223,13 +2345,13 @@ Important Rules for Extraction:
         function removeTallyTabRow(rowId) {
             const rows = getTallyExtraRows().filter(r => String(r.id) !== String(rowId));
             saveTallyExtraRows(rows);
-            const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
+            const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
             if (data.inputs) {
                 const prefix = `tallytab-extra-${rowId}-`;
                 const addKey = `tallytab-extra-add-${rowId}`;
                 Object.keys(data.inputs).forEach(k => { if (k.startsWith(prefix) || k === addKey) delete data.inputs[k]; });
             }
-            localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+            appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
             renderTallyTab();
             saveToStorage();
         }
@@ -2237,7 +2359,7 @@ Important Rules for Extraction:
         function setTallyDefaultBags(value) {
             const n = Number(value);
             tallyDefaultBags = Number.isFinite(n) && n >= 0 ? Math.floor(n) : 60;
-            localStorage.setItem('sgs_tally_default_bags', String(tallyDefaultBags));
+            appStorage.setItem('sgs_tally_default_bags', String(tallyDefaultBags));
             const input = document.getElementById('tallyDefaultBagsInput');
             if (input) input.value = String(tallyDefaultBags);
             // Confirm always reapplies the selected default to every default-bag cell,
@@ -2265,10 +2387,10 @@ Important Rules for Extraction:
             if (!['Bags','In Bulk','In Bulk & Bags'].includes(mode)) mode = DEFAULT_TALLY_MODE;
             saveToStorage();
             tallyTabMode = mode;
-            localStorage.setItem('sgs_tally_mode', tallyTabMode);
+            appStorage.setItem('sgs_tally_mode', tallyTabMode);
             // Apply the selected preset to all active FCL rows immediately.
             const noOfCtn = Math.max(1, Math.min(MAX_FCL, parseInt(document.getElementById('noOfCtn')?.value) || 1));
-            const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
+            const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
             data.inputs = data.inputs || {};
             for (let i = 1; i <= noOfCtn; i++) {
                 tallyTabColumns.forEach((_, idx) => {
@@ -2276,7 +2398,7 @@ Important Rules for Extraction:
                 });
                 data.inputs[`tallytab-mode-${i}`] = tallyTabMode;
             }
-            localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+            appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
             renderTallyTab();
         }
 
@@ -2287,14 +2409,14 @@ Important Rules for Extraction:
         function updateTallyTabHeading(idx, value) {
             if (idx < 0 || idx >= tallyTabColumns.length) return;
             tallyTabColumns[idx] = String(value || (idx + 1));
-            localStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
+            appStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
             saveToStorage();
         }
 
         // Snapshot all visible TALLY cell values before changing the table structure.
         // This prevents a re-render or storage rewrite from replacing unsaved/live values.
         function snapshotTallyTabValues() {
-            const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
+            const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
             data.inputs = data.inputs || {};
             // Read every visible TALLY cell directly from the live DOM, including Add Row cells
             // and Additional inputs. Merge into existing data so unrelated/hidden fields survive.
@@ -2306,8 +2428,8 @@ Important Rules for Extraction:
             }
             // Keep dynamic row metadata and the current column headings alongside the values.
             data.tallyExtraRows = getTallyExtraRows();
-            localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
-            localStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
+            appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+            appStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
             return data;
         }
 
@@ -2329,8 +2451,8 @@ Important Rules for Extraction:
                 const key = `tallytab-extra-${r.id}-${newIdx}`;
                 if (!Object.prototype.hasOwnProperty.call(data.inputs, key)) data.inputs[key] = getTallyPresetValue(r.afterContainer || 1, newIdx);
             });
-            localStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
-            localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+            appStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
+            appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
             renderTallyTab();
             saveToStorage();
         }
@@ -2363,8 +2485,8 @@ Important Rules for Extraction:
                 delete data.inputs[`${prefix}${oldLen - 1}`];
             });
             tallyTabColumns.splice(idx, 1);
-            localStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
-            localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+            appStorage.setItem('sgs_tally_tab_cols', JSON.stringify(tallyTabColumns));
+            appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
             renderTallyTab();
             saveToStorage();
         }
@@ -2499,7 +2621,7 @@ Important Rules for Extraction:
             if(name) { 
                 saveToStorage(); 
                 customColumns.push(name.trim()); 
-                localStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns)); 
+                appStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns)); 
                 loadFromStorage(); 
             }
         }
@@ -2512,7 +2634,7 @@ Important Rules for Extraction:
 
             // Capture the current values before changing the column layout.
             saveToStorage();
-            let data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs: {}, tallies: {}});
+            let data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs: {}, tallies: {}});
             if (!data.inputs) data.inputs = {};
 
             let noOfCtn = parseInt(data.inputs['noOfCtn']) || 1;
@@ -2529,15 +2651,15 @@ Important Rules for Extraction:
             }
 
             // Remove only the VGM override associated with this deleted custom column.
-            let overrides = safeParseJSON(localStorage.getItem('sgs_vgm_overrides'), {});
+            let overrides = safeParseJSON(appStorage.getItem('sgs_vgm_overrides'), {});
             for(let i = 1; i <= noOfCtn; i++) {
                 if(overrides[i] && overrides[i][colName] !== undefined) delete overrides[i][colName];
             }
 
             customColumns.splice(idx, 1);
-            localStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns));
-            localStorage.setItem('sgs_vgm_overrides', JSON.stringify(overrides));
-            localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+            appStorage.setItem('sgs_custom_cols', JSON.stringify(customColumns));
+            appStorage.setItem('sgs_vgm_overrides', JSON.stringify(overrides));
+            appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
 
             // Re-render and restore the saved values for every remaining column.
             loadFromStorage();
@@ -2549,7 +2671,7 @@ Important Rules for Extraction:
             if(noOfCtn <= 1) { alert("အနည်းဆုံး ကွန်တိန်နာ (၁) လုံး ရှိရပါမည်။"); return; }
             if(confirm(`Container ${index} ကို ဖျက်မှာ သေချာပါသလား?`)) { 
                 saveToStorage();
-                let data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
+                let data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
                 let suffixes = ['ctn-truck-', 'ctn-no-input-', 'ctn-color-', 'ctn-tare-', 'ctn-bagcount-', 'ctn-com-', 'ctn-comp-', 'ctn-grossmt-', 'ctn-taremt-', 'ctn-seal-', 'ctn-key-', 'ctn-tallystr-', 'ctn-addrem-'];
                 for(let i = index; i < noOfCtn; i++) {
                     let nextI = i + 1;
@@ -2570,8 +2692,8 @@ Important Rules for Extraction:
                 customColumns.forEach((_, colIdx) => delete data.inputs[`ctn-dyn-${noOfCtn}-${colIdx}`]);
                 delete data.tallies[noOfCtn]; delete vgmOverrides[noOfCtn]; 
                 noOfCtn--; data.inputs['noOfCtn'] = noOfCtn; select.value = noOfCtn;
-                localStorage.setItem('sgs_app_data_final', JSON.stringify(data)); 
-                localStorage.setItem('sgs_vgm_overrides', JSON.stringify(vgmOverrides));
+                appStorage.setItem('sgs_app_data_final', JSON.stringify(data)); 
+                appStorage.setItem('sgs_vgm_overrides', JSON.stringify(vgmOverrides));
                 loadFromStorage();
             }
         }
@@ -2851,7 +2973,7 @@ Important Rules for Extraction:
 		            </tr></thead><tbody>`;
             
             weightArea.innerHTML = ''; 
-            let currentData = safeParseJSON(localStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
+            let currentData = safeParseJSON(appStorage.getItem('sgs_app_data_final'), {inputs:{}, tallies:{}});
             if(!currentData.inputs) currentData.inputs = {};
 
             for (let i = 1; i <= noOfCtn; i++) {
@@ -2984,7 +3106,7 @@ Important Rules for Extraction:
         
         function adjustCount(btn, amount, ctnIndex) { let inp = btn.parentElement.querySelector('.count-input'); inp.value = Math.max(0, (parseInt(inp.value) || 0) + amount); updateContainer(ctnIndex); }
         function handleVgmInput(i, field, val) { if(!vgmOverrides[i]) vgmOverrides[i] = {}; vgmOverrides[i][field] = val; updateVGM(); }
-        function toggleVgmEdit() { isVgmEditing = !isVgmEditing; if(!isVgmEditing) { localStorage.setItem('sgs_vgm_overrides', JSON.stringify(vgmOverrides)); calculateGrand(); } updateVGM(); }
+        function toggleVgmEdit() { isVgmEditing = !isVgmEditing; if(!isVgmEditing) { appStorage.setItem('sgs_vgm_overrides', JSON.stringify(vgmOverrides)); calculateGrand(); } updateVGM(); }
 
         function highlightRow(row) {
             document.querySelectorAll('#ctnDetailsMasterTable tr').forEach(r => r.classList.remove('row-highlight'));
@@ -3881,7 +4003,7 @@ Important Rules for Extraction:
         // ===============================================
         // SIR TEMPLATE NEW FUNCTIONS
         // ===============================================
-        let sirPackages = safeParseJSON(localStorage.getItem('sir_packages'), []);
+        let sirPackages = safeParseJSON(appStorage.getItem('sir_packages'), []);
 
         function renderSirPackages() {
             const container = document.getElementById('sir-packages-container');
@@ -3914,7 +4036,7 @@ Important Rules for Extraction:
             let pkg = sirPackages.find(p => p.id === id);
             if(pkg) { 
                 pkg[field] = val; 
-                localStorage.setItem('sir_packages', JSON.stringify(sirPackages)); 
+                appStorage.setItem('sir_packages', JSON.stringify(sirPackages)); 
                 if (typeof updateVGM === 'function') updateVGM();
             }
         }
@@ -3922,7 +4044,7 @@ Important Rules for Extraction:
         function addSirPackage() {
             sirPackages.push({id: Date.now(), name: 'New Item', val: ''});
             renderSirPackages(); 
-            localStorage.setItem('sir_packages', JSON.stringify(sirPackages));
+            appStorage.setItem('sir_packages', JSON.stringify(sirPackages));
             if (typeof updateVGM === 'function') updateVGM();
         }
 
@@ -3930,7 +4052,7 @@ Important Rules for Extraction:
             if(confirm('ဒီ Package ကို ဖျက်မှာ သေချာပါသလား?')) {
                 sirPackages = sirPackages.filter(p => p.id !== id);
                 renderSirPackages(); 
-                localStorage.setItem('sir_packages', JSON.stringify(sirPackages));
+                appStorage.setItem('sir_packages', JSON.stringify(sirPackages));
                 if (typeof updateVGM === 'function') updateVGM();
             }
         }
@@ -4061,8 +4183,8 @@ Important Rules for Extraction:
             // This HTML version's embedded default is the latest 40-FCL template.
             // Only honor an upload made after this default-template version was installed.
             const saved = await getStoredTemplateFromDB();
-            const uploadVersion = localStorage.getItem('sirUserUploadedTemplateVersion');
-            if (localStorage.getItem('sirUserUploadedTemplate') === 'true' &&
+            const uploadVersion = appStorage.getItem('sirUserUploadedTemplateVersion');
+            if (appStorage.getItem('sirUserUploadedTemplate') === 'true' &&
                 uploadVersion === '40FCL_DEFAULT_2026_10_20' && saved) return saved;
             return base64ToArrayBuffer(DEFAULT_SIR_TEMPLATE_BASE64);
         }
@@ -4104,8 +4226,8 @@ Important Rules for Extraction:
                 await workbook.xlsx.load(buffer);
                 validateSIRTemplateWorkbook(workbook);
                 await saveTemplateToDB(file);
-                localStorage.setItem('sirUserUploadedTemplate', 'true');
-                localStorage.setItem('sirUserUploadedTemplateVersion', '40FCL_DEFAULT_2026_10_20');
+                appStorage.setItem('sirUserUploadedTemplate', 'true');
+                appStorage.setItem('sirUserUploadedTemplateVersion', '40FCL_DEFAULT_2026_10_20');
                 await updateTemplateStatus();
                 alert("✅ မှန်ကန်သော Template ဖိုင်ကို အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
             } catch (e) {
@@ -4117,7 +4239,7 @@ Important Rules for Extraction:
         }
         async function clearTemplate() {
             if(confirm("သိမ်းထားသော Template ဖိုင် အဟောင်းအားလုံးကို ဖျက်ပစ်မည်လား? (Error တက်ပါက မဖြစ်မနေ ဖျက်ပေးပါ)")) {
-                await clearTemplateDB(); localStorage.removeItem('sirTemplateBase64'); localStorage.removeItem('sirUserUploadedTemplate'); localStorage.removeItem('sirUserUploadedTemplateVersion'); document.getElementById('templateFile').value = ''; await updateTemplateStatus();
+                await clearTemplateDB(); appStorage.removeItem('sirTemplateBase64'); appStorage.removeItem('sirUserUploadedTemplate'); appStorage.removeItem('sirUserUploadedTemplateVersion'); document.getElementById('templateFile').value = ''; await updateTemplateStatus();
                 alert("🗑️ Template အဟောင်းများကို ရှင်းလင်းလိုက်ပါပြီ။ Built-in 40 FCL Template ကို ဆက်လက်အသုံးပြုနိုင်ပါသည်။ လိုပါက Template အသစ် Upload တင်နိုင်ပါသည်။");
             }
         }
@@ -4125,8 +4247,8 @@ Important Rules for Extraction:
             const statusDiv = document.getElementById('templateStatus');
             try {
                 const savedBuffer = await getStoredTemplateFromDB();
-                const uploadVersion = localStorage.getItem('sirUserUploadedTemplateVersion');
-                if (localStorage.getItem('sirUserUploadedTemplate') === 'true' && uploadVersion === '40FCL_DEFAULT_2026_10_20' && savedBuffer) {
+                const uploadVersion = appStorage.getItem('sirUserUploadedTemplateVersion');
+                if (appStorage.getItem('sirUserUploadedTemplate') === 'true' && uploadVersion === '40FCL_DEFAULT_2026_10_20' && savedBuffer) {
                     statusDiv.innerText = "✅ သင် Upload တင်ထားသော 40 FCL Template ကို အသုံးပြုနေပါသည်။";
                 } else {
                     statusDiv.innerText = "✅ သင်ပေးထားသော (40 FCL) SIR TEMPLATE.xlsx ကို Default အဖြစ် အသင့်ထည့်ထားပါသည်။ Upload ထပ်လုပ်ရန် မလိုပါ။";
@@ -4452,7 +4574,7 @@ Important Rules for Extraction:
 
                 const wsVgm = workbook.getWorksheet('VGM REPORT');
                 if (wsVgm) {
-                    let sirPkgs = safeParseJSON(localStorage.getItem('sir_packages'), []);
+                    let sirPkgs = safeParseJSON(appStorage.getItem('sir_packages'), []);
                     const lastCtnRow = 20 + fclCount; wsVgm.getCell('L6').value = { formula: `'STUFFING REPORT'!E${lastCtnRow}` };
                     
                     for (let i = 0; i < fclCount; i++) {
@@ -4863,12 +4985,12 @@ Important Rules for Extraction:
     const origSaveToStorage = window.saveToStorage;
     window.saveToStorage = function() {
       if (typeof suppressAutoSave !== 'undefined' && suppressAutoSave) return;
-      const prevSaved = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
+      const prevSaved = safeParseJSON(appStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
 
       origSaveToStorage.apply(this, arguments);
 
       try {
-        const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
+        const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
         data.inputs = data.inputs || {};
         syncJobSetupTareToSIR();
 
@@ -4906,7 +5028,7 @@ Important Rules for Extraction:
             data.sirWeighingInfoVisible = false;
           }
         }
-        localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+        appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
       } catch (e) {}
 
       if (typeof window.saveSIRFormState === 'function') {
@@ -4918,7 +5040,7 @@ Important Rules for Extraction:
   }
 
   function restoreSIRDataFromMainStorage() {
-    const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
+    const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} });
     const inputs = data.inputs || {};
 
     sirDirectIds.forEach(id => {
@@ -4997,7 +5119,7 @@ Important Rules for Extraction:
   if (typeof window.syncDataToSIR === 'function') {
     const origSyncDataToSIR = window.syncDataToSIR;
     window.syncDataToSIR = function() {
-      const savedData = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {} });
+      const savedData = safeParseJSON(appStorage.getItem('sgs_app_data_final'), { inputs: {} });
       const savedInputs = savedData.inputs || {};
       const currentAdd = document.getElementById('sir-total-add')?.value || savedInputs['sir-total-add'] || '';
       const currentTestNo = document.getElementById('test_weight_no')?.value || savedInputs['test_weight_no'] || '';
@@ -5042,7 +5164,7 @@ Important Rules for Extraction:
         const el = document.getElementById(id);
         if (el) { el.value = val; el.setAttribute('value', val); }
       });
-      try { localStorage.removeItem('sir_generator_form_state_v1'); } catch (e) {}
+      try { appStorage.removeItem('sir_generator_form_state_v1'); } catch (e) {}
       origClearFormOnly.apply(this, arguments);
       syncJobSetupTareToSIR();
       window.saveToStorage();
@@ -5138,7 +5260,7 @@ Important Rules for Extraction:
 
   // Share any Saved Job from the Saved Jobs list
   window.shareSingleSavedJob = function(jobNo) {
-    const savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+    const savedJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
     const job = savedJobs[jobNo];
     if (!job) { alert('⚠️ Job Data မတွေ့ပါ။'); return; }
 
@@ -5166,9 +5288,9 @@ Important Rules for Extraction:
       if (inp) { inp.value = jobNo.trim(); inp.setAttribute('value', jobNo.trim()); }
     }
     const jobData = buildJobData();
-    const savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+    const savedJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
     savedJobs[jobNo] = jobData;
-    localStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
+    appStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
     shareSingleSavedJob(jobNo);
   };
 
@@ -5185,7 +5307,7 @@ Important Rules for Extraction:
         // CASE 1: Single Shared Job File (sgs_share_type === 'SINGLE_JOB_V1')
         if (data && data.sgs_share_type === 'SINGLE_JOB_V1' && data.jobNo && data.jobData) {
           const jobNo = String(data.jobNo).trim();
-          const savedJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+          const savedJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
           if (savedJobs[jobNo]) {
             if (!confirm(`သင့်ဖုန်းထဲတွင် Job [${jobNo}] ရှိနေပြီးသားဖြစ်သည်။ အသစ်ဖြင့် အစားထိုးမည်လား?`)) {
               event.target.value = '';
@@ -5193,23 +5315,23 @@ Important Rules for Extraction:
             }
           }
           savedJobs[jobNo] = data.jobData;
-          localStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
+          appStorage.setItem('sgs_saved_jobs', JSON.stringify(savedJobs));
 
           // Also sync to Firebase if connected
-          if (typeof isFirebaseReady !== 'undefined' && isFirebaseReady && database) {
-            try { database.ref('sgs_jobs/' + cloudKey(jobNo)).set(data.jobData); } catch (err) {}
+          if (typeof isFirebaseReady !== 'undefined' && isFirebaseReady && database && currentUser) {
+            try { userJobsRef().child(cloudKey(jobNo)).set(data.jobData); } catch (err) {}
           }
 
           if (confirm(`✅ Shared Job [${jobNo}] ကို လက်ခံရရှိပြီး Saved Jobs ထဲသို့ ထည့်သွင်းပြီးပါပြီ။\n\nယခု Job [${jobNo}] ကို တန်းဖွင့်မည်လား?`)) {
             const job = data.jobData;
-            localStorage.setItem('sgs_app_data_final', job.appData || '{}');
-            localStorage.setItem('sgs_vgm_overrides', job.vgmData || '{}');
-            localStorage.setItem('sgs_custom_cols', job.customCols || '[]');
-            if (job.fixedHeadings) localStorage.setItem('sgs_fixed_headings', job.fixedHeadings);
-            if (job.tallyTabCols) localStorage.setItem('sgs_tally_tab_cols', job.tallyTabCols);
-            localStorage.setItem('sgs_tally_extra_rows', job.tallyExtraRows || '[]');
-            if (job.tallyMode) { localStorage.setItem('sgs_tally_mode', job.tallyMode); tallyTabMode = job.tallyMode; }
-            if (job.sirPkgs) localStorage.setItem('sir_packages', job.sirPkgs);
+            appStorage.setItem('sgs_app_data_final', job.appData || '{}');
+            appStorage.setItem('sgs_vgm_overrides', job.vgmData || '{}');
+            appStorage.setItem('sgs_custom_cols', job.customCols || '[]');
+            if (job.fixedHeadings) appStorage.setItem('sgs_fixed_headings', job.fixedHeadings);
+            if (job.tallyTabCols) appStorage.setItem('sgs_tally_tab_cols', job.tallyTabCols);
+            appStorage.setItem('sgs_tally_extra_rows', job.tallyExtraRows || '[]');
+            if (job.tallyMode) { appStorage.setItem('sgs_tally_mode', job.tallyMode); tallyTabMode = job.tallyMode; }
+            if (job.sirPkgs) appStorage.setItem('sir_packages', job.sirPkgs);
             loadFromStorage();
             closeLoadModal();
           } else if (document.getElementById('loadJobModal')?.style.display === 'flex') {
@@ -5221,7 +5343,7 @@ Important Rules for Extraction:
 
         // CASE 2: Full Backup File -> Offer Smart Merge (Default) or Full Overwrite
         const incomingJobs = safeParseJSON(data.sgs_saved_jobs, {});
-        const existingJobs = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {});
+        const existingJobs = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {});
         const existingCount = Object.keys(existingJobs).length;
         const incomingCount = Object.keys(incomingJobs).length;
 
@@ -5235,34 +5357,34 @@ Important Rules for Extraction:
         }
 
         const backupValue = (value) => typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
-        if (data.sgs_app_data_final) localStorage.setItem('sgs_app_data_final', backupValue(data.sgs_app_data_final));
-        if (data.sgs_vgm_overrides) localStorage.setItem('sgs_vgm_overrides', backupValue(data.sgs_vgm_overrides));
-        if (data.sgs_custom_cols) localStorage.setItem('sgs_custom_cols', backupValue(data.sgs_custom_cols));
-        if (data.sgs_tally_tab_cols !== undefined) localStorage.setItem('sgs_tally_tab_cols', backupValue(data.sgs_tally_tab_cols));
+        if (data.sgs_app_data_final) appStorage.setItem('sgs_app_data_final', backupValue(data.sgs_app_data_final));
+        if (data.sgs_vgm_overrides) appStorage.setItem('sgs_vgm_overrides', backupValue(data.sgs_vgm_overrides));
+        if (data.sgs_custom_cols) appStorage.setItem('sgs_custom_cols', backupValue(data.sgs_custom_cols));
+        if (data.sgs_tally_tab_cols !== undefined) appStorage.setItem('sgs_tally_tab_cols', backupValue(data.sgs_tally_tab_cols));
         if (data.sgs_tally_extra_rows !== undefined) {
-          localStorage.setItem('sgs_tally_extra_rows', backupValue(data.sgs_tally_extra_rows));
+          appStorage.setItem('sgs_tally_extra_rows', backupValue(data.sgs_tally_extra_rows));
           saveTallyExtraRows(safeParseJSON(data.sgs_tally_extra_rows, []));
         }
         if (data.sgs_tally_default_bags !== undefined) {
-          localStorage.setItem('sgs_tally_default_bags', backupValue(data.sgs_tally_default_bags));
+          appStorage.setItem('sgs_tally_default_bags', backupValue(data.sgs_tally_default_bags));
           tallyDefaultBags = Math.max(0, Number(data.sgs_tally_default_bags) || 0);
         }
-        if (data.sgs_tally_mode) { localStorage.setItem('sgs_tally_mode', data.sgs_tally_mode); tallyTabMode = data.sgs_tally_mode; }
+        if (data.sgs_tally_mode) { appStorage.setItem('sgs_tally_mode', data.sgs_tally_mode); tallyTabMode = data.sgs_tally_mode; }
         if (data.sgs_fixed_headings !== undefined) {
-          localStorage.setItem('sgs_fixed_headings', backupValue(data.sgs_fixed_headings));
+          appStorage.setItem('sgs_fixed_headings', backupValue(data.sgs_fixed_headings));
           fixedHeadings = safeParseJSON(data.sgs_fixed_headings, fixedHeadings);
         }
-        if (data.sgs_ac_hist) localStorage.setItem('sgs_ac_hist', backupValue(data.sgs_ac_hist));
+        if (data.sgs_ac_hist) appStorage.setItem('sgs_ac_hist', backupValue(data.sgs_ac_hist));
 
         const pkgs = data.sir_packages !== undefined ? data.sir_packages : data.sgs_other_packages;
-        if (pkgs !== undefined) localStorage.setItem('sir_packages', backupValue(pkgs));
+        if (pkgs !== undefined) appStorage.setItem('sir_packages', backupValue(pkgs));
 
         if (data.sgs_saved_jobs) {
           if (mergeMode) {
             const merged = Object.assign({}, existingJobs, incomingJobs);
-            localStorage.setItem('sgs_saved_jobs', JSON.stringify(merged));
+            appStorage.setItem('sgs_saved_jobs', JSON.stringify(merged));
           } else {
-            localStorage.setItem('sgs_saved_jobs', backupValue(data.sgs_saved_jobs));
+            appStorage.setItem('sgs_saved_jobs', backupValue(data.sgs_saved_jobs));
           }
         }
 
@@ -5324,7 +5446,7 @@ Important Rules for Extraction:
   // =========================================================================
   const acFields=['shipper-input','buyer-input','commodity-input','packing-input','inspection-place-input','vessel-input','destination-input','inspector-input'];
   function initAC(){
-    const h=safeParseJSON(localStorage.getItem('sgs_ac_hist'),{});
+    const h=safeParseJSON(appStorage.getItem('sgs_ac_hist'),{});
     acFields.forEach(id=>{
       const el=document.getElementById(id);if(!el)return;
       let dl=document.getElementById('dl-'+id);
@@ -5333,19 +5455,19 @@ Important Rules for Extraction:
     });
   }
   function saveAutoHistory(){
-    const h=safeParseJSON(localStorage.getItem('sgs_ac_hist'),{});
+    const h=safeParseJSON(appStorage.getItem('sgs_ac_hist'),{});
     acFields.forEach(id=>{
       const v=(document.getElementById(id)?.value||'').trim();
       if(v.length>=2){const a=h[id]||[];if(!a.includes(v)){a.unshift(v);h[id]=a.slice(0,25);}}
     });
-    localStorage.setItem('sgs_ac_hist',JSON.stringify(h));initAC();
+    appStorage.setItem('sgs_ac_hist',JSON.stringify(h));initAC();
   }
 
   // =========================================================================
   // 6. Theme Switcher + Weight Tally Undo History
   // =========================================================================
-  const themes=['normal','dark-mode','sunlight-mode'];let tIdx=Math.max(0,themes.indexOf(localStorage.getItem('sgs_theme')||'normal'));
-  function setTheme(t){document.body.classList.remove('dark-mode','sunlight-mode');if(t!=='normal')document.body.classList.add(t);localStorage.setItem('sgs_theme',t);const b=document.getElementById('nav-theme');if(b)b.textContent=t==='dark-mode'?'🌙 Dark':(t==='sunlight-mode'?'☀️ Sun':'🌓 Theme');}
+  const themes=['normal','dark-mode','sunlight-mode'];let tIdx=Math.max(0,themes.indexOf(appStorage.getItem('sgs_theme')||'normal'));
+  function setTheme(t){document.body.classList.remove('dark-mode','sunlight-mode');if(t!=='normal')document.body.classList.add(t);appStorage.setItem('sgs_theme',t);const b=document.getElementById('nav-theme');if(b)b.textContent=t==='dark-mode'?'🌙 Dark':(t==='sunlight-mode'?'☀️ Sun':'🌓 Theme');}
 
   let hist=[];
   const origAdj=window.adjustCount;
@@ -5504,8 +5626,8 @@ Important Rules for Extraction:
 
     const idLower = (input.id || input.name || '').toLowerCase();
     try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
+      for (let i = 0; i < appStorage.length; i++) {
+        const k = appStorage.key(i);
         if (!k) continue;
         const kLower = k.toLowerCase();
         if (
@@ -5514,7 +5636,7 @@ Important Rules for Extraction:
           ((idLower.includes('place') || idLower.includes('location')) && (kLower.includes('place') || kLower.includes('location'))) ||
           (idLower && kLower.includes(idLower.replace('-input', '')))
         ) {
-          const raw = localStorage.getItem(k);
+          const raw = appStorage.getItem(k);
           if (raw && raw.startsWith('[')) {
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
@@ -5666,6 +5788,8 @@ Important Rules for Extraction:
   const NAME_KEY = 'sgs_live_name';
   const BASE_PREFIX = 'sgs_live_base_';
   const SKIP_ID = /^(tg-|searchInput$|customFileName$|importBackupInput$)/;
+  // Legacy team links use a shared root node; keep them disabled until UID-bound invite rules are implemented.
+  const TEAM_LIVE_SECURE_INVITES_READY = false;
   const live = { cfg: null, db: null, ref: null, remote: null, base: {}, inflight: new Set(),
     ready: false, pushing: false, applying: false, ended: false, online: true, error: '',
     presence: {}, lastEdit: null, lastTyped: 0, timers: {}, handlers: [] };
@@ -5692,7 +5816,7 @@ Important Rules for Extraction:
 
   // ---------- flat state <-> app storage ----------
   function computeFlat() {
-    const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {} }) || { inputs: {} };
+    const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), { inputs: {} }) || { inputs: {} };
     const inputs = data.inputs || {};
     const flat = {};
     Object.keys(inputs).forEach(id => {
@@ -5705,9 +5829,9 @@ Important Rules for Extraction:
     part('sirWeighingRows', data.sirWeighingRows);
     part('sirWeighingInfoHtml', data.sirWeighingInfoHtml);
     part('sirWeighingInfoVisible', data.sirWeighingInfoVisible);
-    part('tallyExtra', localStorage.getItem('sgs_tally_extra_rows') || '[]');
-    part('vgm', localStorage.getItem('sgs_vgm_overrides') || '{}');
-    part('customCols', localStorage.getItem('sgs_custom_cols') || '[]');
+    part('tallyExtra', appStorage.getItem('sgs_tally_extra_rows') || '[]');
+    part('vgm', appStorage.getItem('sgs_vgm_overrides') || '{}');
+    part('customCols', appStorage.getItem('sgs_custom_cols') || '[]');
     part('fixedHeadings', JSON.stringify(fixedHeadings));
     part('tallyCols', JSON.stringify(tallyTabColumns));
     part('tallyMode', tallyTabMode);
@@ -5729,13 +5853,13 @@ Important Rules for Extraction:
         case 'sirWeighingRows': data.sirWeighingRows = pj(v, []); break;
         case 'sirWeighingInfoHtml': data.sirWeighingInfoHtml = v; break;
         case 'sirWeighingInfoVisible': data.sirWeighingInfoVisible = (v === 'true'); break;
-        case 'tallyExtra': localStorage.setItem('sgs_tally_extra_rows', v); data.tallyExtraRows = pj(v, []); break;
-        case 'vgm': localStorage.setItem('sgs_vgm_overrides', v); vgmOverrides = pj(v, {}); break;
-        case 'customCols': { localStorage.setItem('sgs_custom_cols', v); const a = pj(v, []); customColumns = Array.isArray(a) ? a : []; break; }
-        case 'fixedHeadings': { const a = pj(v, null); if (Array.isArray(a) && a.length === fixedHeadings.length) { fixedHeadings = a; localStorage.setItem('sgs_fixed_headings', v); } break; }
-        case 'tallyCols': localStorage.setItem('sgs_tally_tab_cols', v); break;
-        case 'tallyMode': localStorage.setItem('sgs_tally_mode', v); tallyTabMode = v; break;
-        case 'sirPkgs': { localStorage.setItem('sir_packages', v); const a = pj(v, []); sirPackages = Array.isArray(a) ? a : []; pkgsChanged = true; break; }
+        case 'tallyExtra': appStorage.setItem('sgs_tally_extra_rows', v); data.tallyExtraRows = pj(v, []); break;
+        case 'vgm': appStorage.setItem('sgs_vgm_overrides', v); vgmOverrides = pj(v, {}); break;
+        case 'customCols': { appStorage.setItem('sgs_custom_cols', v); const a = pj(v, []); customColumns = Array.isArray(a) ? a : []; break; }
+        case 'fixedHeadings': { const a = pj(v, null); if (Array.isArray(a) && a.length === fixedHeadings.length) { fixedHeadings = a; appStorage.setItem('sgs_fixed_headings', v); } break; }
+        case 'tallyCols': appStorage.setItem('sgs_tally_tab_cols', v); break;
+        case 'tallyMode': appStorage.setItem('sgs_tally_mode', v); tallyTabMode = v; break;
+        case 'sirPkgs': { appStorage.setItem('sir_packages', v); const a = pj(v, []); sirPackages = Array.isArray(a) ? a : []; pkgsChanged = true; break; }
       }
     });
     return { pkgsChanged };
@@ -5772,10 +5896,10 @@ Important Rules for Extraction:
       const y = window.scrollY;
       try {
         live.origSave();                           // flush the screen first so local-only edits survive
-        const data = safeParseJSON(localStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} }) || { inputs: {}, tallies: {} };
+        const data = safeParseJSON(appStorage.getItem('sgs_app_data_final'), { inputs: {}, tallies: {} }) || { inputs: {}, tallies: {} };
         data.inputs = data.inputs || {};
         const res = writeEntries(toApply, data);
-        localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+        appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
         loadFromStorage();
         if (res.pkgsChanged) { try { renderSirPackages(); } catch (e) {} }
         try { updateVGM(); } catch (e) {}
@@ -5804,13 +5928,13 @@ Important Rules for Extraction:
   }
 
   // ---------- sync engine ----------
-  function myName() { return (live.cfg && live.cfg.name) || localStorage.getItem(NAME_KEY) || 'User'; }
+  function myName() { return (live.cfg && live.cfg.name) || appStorage.getItem(NAME_KEY) || 'User'; }
 
   function persistBase() {
     clearTimeout(live.timers.base);
     live.timers.base = setTimeout(() => {
       if (!live.cfg) return;
-      try { localStorage.setItem(BASE_PREFIX + live.cfg.key, JSON.stringify(live.base)); } catch (e) {}
+      try { appStorage.setItem(BASE_PREFIX + live.cfg.key, JSON.stringify(live.base)); } catch (e) {}
     }, 800);
   }
 
@@ -5853,17 +5977,19 @@ Important Rules for Extraction:
   // ---------- connection ----------
   function getDb(url) {
     if (typeof firebase === 'undefined') throw new Error('Firebase library မရရှိပါ။ Internet ချိတ်ဆက်မှုကို စစ်ဆေးပါ။');
-    let app = firebase.apps.find(a => a.name.indexOf('live') === 0 && a.options && a.options.databaseURL === url);
-    if (!app) app = firebase.initializeApp({ databaseURL: url }, 'live_' + rand());
+    const configuredUrl = normaliseFirebaseUrl(firebaseConfig.databaseURL);
+    if (normaliseFirebaseUrl(url) !== configuredUrl) throw new Error('Google ဝင်ရောက်မှုသည် သတ်မှတ်ထားသော Firebase Database တွင်သာ အလုပ်လုပ်ပါမည်။ Settings ရှိ URL ကို Project URL နှင့် တူအောင်ထားပါ။');
+    const app = firebase.apps.find(a => a.name === 'sgs') || firebase.initializeApp(Object.assign({}, firebaseConfig, { databaseURL: configuredUrl }), 'sgs');
     return app.database();
   }
 
   function start(cfg) {
+    if (!TEAM_LIVE_SECURE_INVITES_READY) { live.cfg = null; live.ready = false; return; }
     stopListeners();
     live.cfg = cfg; live.ended = false; live.ready = false; live.error = ''; live.remote = null;
     live.db = getDb(cfg.url);
     live.ref = live.db.ref('sgs_live/' + cfg.key);
-    live.base = safeParseJSON(localStorage.getItem(BASE_PREFIX + cfg.key), {}) || {};
+    live.base = safeParseJSON(appStorage.getItem(BASE_PREFIX + cfg.key), {}) || {};
     // The older single-user cloud sync must not run against the same job at the same time.
     try { clearTimeout(cloudTimer); cloudTimer = null; if (cloudListenerRef) { cloudListenerRef.off(); cloudListenerRef = null; cloudListenerKey = ''; } } catch (e) {}
 
@@ -5911,16 +6037,16 @@ Important Rules for Extraction:
     const key = live.cfg.key;
     try { live.ref.child('presence/' + CLOUD_DEVICE_ID).remove(); } catch (e) {}
     stopListeners();
-    try { localStorage.removeItem(CFG_KEY); localStorage.removeItem(BASE_PREFIX + key); } catch (e) {}
+    try { appStorage.removeItem(CFG_KEY); appStorage.removeItem(BASE_PREFIX + key); } catch (e) {}
     live.cfg = null; live.ready = false; live.presence = {}; live.base = {};
     updateBadge(); renderModalIfOpen();
-    if (!silent) alert('Team Live မှ ထွက်ပြီးပါပြီ။ ဒီစက်ထဲက Data ကို ဆက်ထားပါသည်။');
+      alert('❌ Team Live ကို စတင်မရပါ: ' + (e && e.message ? e.message : e) + '\n\nTeam Live အတွက် လုံခြုံသော ဖိတ်ခေါ်မှုစည်းမျဉ်းများ မပြင်ဆင်ရသေးပါ။ အများသုံး read/write ကို မဖွင့်ပါနှင့်။');
   }
 
   function endedRemotely() {
     if (live.ended) return;
     live.ended = true;
-    alert('⚠️ Team Live session ပြီးဆုံးသွားပါပြီ (Owner က ပိတ်လိုက်သည် သို့မဟုတ် မတွေ့တော့ပါ)။ ဒီစက်ထဲက Data ကို ဆက်ထားပါသည်။');
+      alert('❌ Team Live ကို စတင်မရပါ: ' + (e && e.message ? e.message : e) + '\n\nTeam Live အတွက် လုံခြုံသော ဖိတ်ခေါ်မှုစည်းမျဉ်းများ မပြင်ဆင်ရသေးပါ။ အများသုံး read/write ကို မဖွင့်ပါနှင့်။');
     leave(true);
   }
 
@@ -5945,14 +6071,16 @@ Important Rules for Extraction:
   }
 
   async function startShare() {
+    if (!currentUser) { alert('Team Live ကို စတင်မီ Google အကောင့်ဖြင့် ဝင်ပါ။'); return; }
+    if (!TEAM_LIVE_SECURE_INVITES_READY) { alert('Team Live ကို ယာယီပိတ်ထားပါသည်။ ၂၄ နာရီသက်တမ်းနှင့် သီးသန့်အသုံးပြုခွင့်စည်းမျဉ်းများ မပြီးစီးသေးပါ။ အများသုံး Firebase read/write ကို မဖွင့်ပါနှင့်။'); return; }
     const name = (document.getElementById('live-name-input')?.value || '').trim();
     const url = normaliseFirebaseUrl(document.getElementById('live-url-input')?.value || '');
     const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
     if (!jobNo) { alert('⚠️ Job No အရင်ဖြည့်ပါ'); return; }
     if (!name) { alert('⚠️ သင့်နာမည် ထည့်ပါ (Team မှာ ပြမည့်နာမည်)'); return; }
     if (!url) { alert('⚠️ Firebase URL ထည့်ပါ'); return; }
-    localStorage.setItem(NAME_KEY, name);
-    localStorage.setItem('sgs_firebase_url', url);
+    appStorage.setItem(NAME_KEY, name);
+    appStorage.setItem('sgs_firebase_url', url);
     const btn = document.getElementById('live-start-btn'); if (btn) { btn.disabled = true; btn.textContent = '⏳ …'; }
     try {
       window.saveToStorage();
@@ -5961,22 +6089,24 @@ Important Rules for Extraction:
       const db = getDb(url);
       await db.ref('sgs_live/' + key).set({ flat, meta: { jobNo, owner: name, createdAt: firebase.database.ServerValue.TIMESTAMP } });
       const cfg = { url, key, jobNo, name, owner: true };
-      localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
-      localStorage.setItem(BASE_PREFIX + key, JSON.stringify(flat));
+      appStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+      appStorage.setItem(BASE_PREFIX + key, JSON.stringify(flat));
       start(cfg);
     } catch (e) {
-      alert('❌ Live စတင်မရပါ: ' + (e && e.message ? e.message : e) + '\n\nFirebase Rules တွင် sgs_live ကို read/write ခွင့်ပြုထားရန် လိုပါသည်။');
+      alert('❌ Team Live ကို စတင်မရပါ: ' + (e && e.message ? e.message : e) + '\n\nTeam Live အတွက် လုံခြုံသော ဖိတ်ခေါ်မှုစည်းမျဉ်းများ မပြင်ဆင်ရသေးပါ။ အများသုံး read/write ကို မဖွင့်ပါနှင့်။');
     }
     renderModal();
   }
 
   async function join(text, fromLink) {
+    if (!currentUser) { alert('Team Live ထဲ မဝင်မီ Google အကောင့်ဖြင့် ဝင်ပါ။'); return; }
+    if (!TEAM_LIVE_SECURE_INVITES_READY) { alert('Team Live ကို ယာယီပိတ်ထားပါသည်။ ၂၄ နာရီသက်တမ်းနှင့် သီးသန့်အသုံးပြုခွင့်စည်းမျဉ်းများ မပြီးစီးသေးပါ။ အများသုံး Firebase read/write ကို မဖွင့်ပါနှင့်။'); return; }
     let info;
     try { info = fromCode(text); } catch (e) { alert('❌ Link / Code မမှန်ပါ'); return; }
     if (live.cfg && live.cfg.key === info.k) { alert('ဒီ Session ထဲမှာ ရှိပြီးသားပါ။'); return; }
     if (!confirm(`👥 Job [${info.j || ''}] ၏ Team Live Session သို့ ဝင်မလား?\n\nဒီစက်ထဲက လက်ရှိ Job ကို Saved Jobs ထဲ အရင်သိမ်းပြီး၊ Team ၏ Data ဖြင့် အစားထိုးပါမည်။`)) return;
-    let name = localStorage.getItem(NAME_KEY) || '';
-    if (!name) { name = (prompt('သင့်နာမည် (Team မှာ ပြမည့်နာမည်):', '') || '').trim(); if (!name) return; localStorage.setItem(NAME_KEY, name); }
+    let name = appStorage.getItem(NAME_KEY) || '';
+    if (!name) { name = (prompt('သင့်နာမည် (Team မှာ ပြမည့်နာမည်):', '') || '').trim(); if (!name) return; appStorage.setItem(NAME_KEY, name); }
     try {
       const db = getDb(info.u);
       const snap = await db.ref('sgs_live/' + info.k + '/flat').once('value');
@@ -5986,17 +6116,17 @@ Important Rules for Extraction:
       try {
         window.saveToStorage();
         const cur = (document.getElementById('job-no-input')?.value || '').trim();
-        if (cur) { const saved = safeParseJSON(localStorage.getItem('sgs_saved_jobs'), {}); saved[cur] = buildJobData(); localStorage.setItem('sgs_saved_jobs', JSON.stringify(saved)); }
+        if (cur) { const saved = safeParseJSON(appStorage.getItem('sgs_saved_jobs'), {}); saved[cur] = buildJobData(); appStorage.setItem('sgs_saved_jobs', JSON.stringify(saved)); }
       } catch (e) {}
       if (live.cfg) leave(true);
       suppressAutoSave = true;
-      ['sgs_vgm_overrides', 'sgs_custom_cols', 'sgs_fixed_headings', 'sgs_tally_tab_cols', 'sgs_tally_extra_rows', 'sir_packages', SIR_FORM_STATE_KEY].forEach(k => localStorage.removeItem(k));
+      ['sgs_vgm_overrides', 'sgs_custom_cols', 'sgs_fixed_headings', 'sgs_tally_tab_cols', 'sgs_tally_extra_rows', 'sir_packages', SIR_FORM_STATE_KEY].forEach(k => appStorage.removeItem(k));
       const data = { inputs: {}, tallies: {} };
       writeEntries(flat, data);
-      localStorage.setItem('sgs_app_data_final', JSON.stringify(data));
+      appStorage.setItem('sgs_app_data_final', JSON.stringify(data));
       const cfg = { url: info.u, key: info.k, jobNo: info.j || '', name, owner: false };
-      localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
-      localStorage.setItem(BASE_PREFIX + info.k, JSON.stringify(flat));
+      appStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+      appStorage.setItem(BASE_PREFIX + info.k, JSON.stringify(flat));
       history.replaceState(null, '', location.href.split('#')[0]);
       location.reload();
     } catch (e) {
@@ -6084,8 +6214,8 @@ Important Rules for Extraction:
       const jobNo = (document.getElementById('job-no-input')?.value || '').trim();
       html += `<div style="font-size:13px; color:#444; line-height:1.5;">လက်ရှိ Job ကို Team ဖြင့် အတူတကွ Live ပြင်ဆင်နိုင်ရန် Share Link ထုတ်ပါ။</div>
         <label style="${lbl}">Job No</label><input type="text" readonly value="${esc(jobNo)}" style="${inp} background:#f1f1f1;" placeholder="Job No အရင်ဖြည့်ပါ">
-        <label style="${lbl}">သင့်နာမည်</label><input type="text" id="live-name-input" value="${esc(localStorage.getItem(NAME_KEY) || '')}" style="${inp}" placeholder="e.g. Kyaw Nay Aung">
-        <label style="${lbl}">Firebase URL (Realtime Database)</label><input type="text" id="live-url-input" value="${esc(localStorage.getItem('sgs_firebase_url') || '')}" style="${inp}" placeholder="https://your-project-default-rtdb.firebaseio.com" autocapitalize="off" autocomplete="off" spellcheck="false">
+        <label style="${lbl}">သင့်နာမည်</label><input type="text" id="live-name-input" value="${esc(appStorage.getItem(NAME_KEY) || '')}" style="${inp}" placeholder="e.g. Kyaw Nay Aung">
+        <label style="${lbl}">Firebase URL (Realtime Database)</label><input type="text" id="live-url-input" value="${esc(firebaseConfig.databaseURL)}" style="${inp}" placeholder="https://your-project-default-rtdb.firebaseio.com" autocapitalize="off" autocomplete="off" spellcheck="false">
         <button type="button" id="live-start-btn" style="${btn('#2C5E43')} width:100%; margin-top:12px; font-size:14px;">🔗 Share Link ထုတ်မည် (Live စတင်မည်)</button>
         <div style="border-top:1px dashed #bbb; margin-top:16px; padding-top:6px;">
           <label style="${lbl}">📥 Code / Link ဖြင့် ဝင်မည်</label>
@@ -6095,10 +6225,18 @@ Important Rules for Extraction:
         <details style="margin-top:14px; font-size:12px; color:#555;"><summary style="cursor:pointer; font-weight:700;">Firebase Rules (တစ်ကြိမ်သာ ပြင်ရန်)</summary>
           <pre style="background:#f4f4f4; padding:8px; border-radius:6px; overflow:auto; font-size:11px;">{
   "rules": {
-    "sgs_jobs": { ".read": true, ".write": true },
-    "sgs_live": { ".read": true, ".write": true }
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        "sgs_jobs": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    }
   }
-}</pre>Firebase Console → Realtime Database → Rules တွင် ထည့်ပြီး Publish နှိပ်ပါ။</details>`;
+}</pre>ဤစည်းမျဉ်းသည် မိမိ UID အောက်ရှိ Saved Jobs ကိုသာ ဝင်ကြည့်ခွင့်ပြုသည်။ Team Live အတွက် သီးခြားလုံခြုံသော ဖိတ်ကြားမှုစည်းမျဉ်း လိုအပ်သောကြောင့် အများသုံး read/write ကို မဖွင့်ပါနှင့်။ Firebase Console → Realtime Database → Rules တွင် စစ်ဆေးပြီးမှ Publish လုပ်ပါ။</details>`;
     }
     body.innerHTML = html;
     const on = (id, fn) => { const e = document.getElementById(id); if (e) e.addEventListener('click', fn); };
@@ -6144,10 +6282,13 @@ Important Rules for Extraction:
 
   window.addEventListener('load', () => {
     setTimeout(() => {
-      const cfg = safeParseJSON(localStorage.getItem(CFG_KEY), null);
+      const cfg = safeParseJSON(appStorage.getItem(CFG_KEY), null);
       if (cfg && cfg.url && cfg.key) { try { start(cfg); } catch (e) { console.warn('Team Live start failed:', e); } }
       const m = (location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
-      if (m) {
+      if (m && !TEAM_LIVE_SECURE_INVITES_READY) {
+        history.replaceState(null, '', location.href.split('#')[0]);
+        setTimeout(() => alert('ဒီ Team Live လင့်ခ်သည် လုံခြုံသော ၂၄ နာရီဖိတ်ခေါ်မှုစနစ် မပြီးသေးသောကြောင့် လက်ရှိအက်ပ်တွင် အသုံးမပြုနိုင်သေးပါ။'), 800);
+      } else if (m) {
         const same = cfg && (() => { try { return fromCode(m[1]).k === cfg.key; } catch (e) { return false; } })();
         if (same) history.replaceState(null, '', location.href.split('#')[0]);
         else { join(location.hash, true); history.replaceState(null, '', location.href.split('#')[0]); }

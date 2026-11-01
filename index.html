@@ -5772,9 +5772,6 @@ Important Rules for Extraction:
           ".write": "!newData.exists()",
           "$dev": { ".read": true, ".write": "!data.exists()" }
         },
-        "members": {
-          "$dev": { ".read": true, ".write": true }
-        },
         "data": { "$token": { ".read": true, ".write": true } }
       }
     }
@@ -5821,7 +5818,8 @@ Important Rules for Extraction:
     const c0 = safeParseJSON(localStorage.getItem(CFG_KEY), null);
     if (c0 && c0.token) return;                       // already inside a live session: never lock
     if (isBlocked()) { showLock('blocked'); return; }
-    if (readJoinToken()) showLock('ask');             // hide the app while the warning is on screen
+    const hm = (location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
+    if (hm) showLock('ask');                          // hide the app while the warning is on screen
   })();
 
   // ---------- pure 3-way merge (unit tested) ----------
@@ -6073,12 +6071,9 @@ Important Rules for Extraction:
     clearInterval(live.timers.interval); clearInterval(live.timers.tick); clearTimeout(live.timers.soon);
   }
 
-  async function leave(silent) {
+  function leave(silent) {
     if (!live.cfg) return;
     const key = live.cfg.key;
-    if (!live.cfg.owner) {
-      try { await live.dref.child('members/' + enc(CLOUD_DEVICE_ID)).set({ status: 'revoked', at: firebase.database.ServerValue.TIMESTAMP }); } catch (e) {}
-    }
     try { live.dref.child('presence/' + CLOUD_DEVICE_ID).remove(); } catch (e) {}
     stopListeners();
     try { localStorage.removeItem(CFG_KEY); localStorage.removeItem(BASE_PREFIX + key); } catch (e) {}
@@ -6109,53 +6104,19 @@ Important Rules for Extraction:
     if (!o || !o.u || !o.k || !o.e) throw new Error('bad code');
     return o;
   }
-  // Android share targets may preserve a query string more reliably than a URL
-  // fragment. Accept both formats so links work from Telegram, Chrome and the APK.
-  function readJoinToken() {
-    try {
-      const q = new URLSearchParams(location.search || '').get('join');
-      if (q) return q;
-    } catch (e) {}
-    const m = String(location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
-    return m ? m[1] : '';
-  }
   // Link needs the app's web address. When the app is opened from the web it is remembered; when it is opened
   // as a local file (content:// or file://) the remembered / typed web address is used instead.
   const WEB_KEY = 'sgs_live_web_url';
   const isWeb = /^https?:$/.test(location.protocol);
-  if (isWeb) { try { if (!localStorage.getItem(WEB_KEY)) localStorage.setItem(WEB_KEY, location.href.split('#')[0]); } catch (e) {} }
+  if (isWeb) { try { localStorage.setItem(WEB_KEY, location.href.split('#')[0]); } catch (e) {} }
   function webBase() {
-    let v = ''; try { v = localStorage.getItem(WEB_KEY) || ''; } catch (e) {}
-    // A saved custom Public URL must win over the APK WebView's http://localhost base.
-    if (/^https:\/\//i.test(v)) return v.split('#')[0];
     if (isWeb) return location.href.split('#')[0];
-    return '';
+    let v = ''; try { v = localStorage.getItem(WEB_KEY) || ''; } catch (e) {}
+    return /^https?:\/\//i.test(v) ? v.split('#')[0] : '';
   }
   function toLink(cfg) {
     const base = webBase();
-    if (!base) return '';
-    const token = toCode(cfg);
-    return base + (base.includes('?') ? '&' : '?') + 'join=' + token;
-  }
-  function publicUrlValue() {
-    try { return (localStorage.getItem(WEB_KEY) || '').trim(); } catch (e) { return ''; }
-  }
-  function savePublicUrl(value) {
-    const v = String(value || '').trim().replace(/\s+/g, '');
-    if (!/^https:\/\/[^\s]+/i.test(v)) { alert('⚠️ Public Web URL ကို https:// ဖြင့် အပြည့်အစုံထည့်ပါ'); return false; }
-    try { localStorage.setItem(WEB_KEY, v.split('#')[0]); } catch (e) {}
-    return true;
-  }
-  async function shareTeamLink() {
-    const url = toLink(live.cfg);
-    if (!url) { alert('⚠️ Public Web URL အရင်ထည့်ပါ'); return; }
-    const shareData = { title: 'SGS Job ' + (live.cfg?.jobNo || ''), text: 'SGS Surveyor Notes - Job ' + (live.cfg?.jobNo || '') + ' (Team Live)', url };
-    try {
-      if (navigator.share) { await navigator.share(shareData); return; }
-      const capShare = window.Capacitor?.Plugins?.Share;
-      if (capShare?.share) { await capShare.share(shareData); return; }
-      await copyText(url, '✅ Link ကူးပြီးပါပြီ။ Telegram ထဲ Paste လုပ်ပို့ပါ');
-    } catch (e) { if (e?.name !== 'AbortError') await copyText(url, '✅ Link ကူးပြီးပါပြီ။ Telegram ထဲ Paste လုပ်ပို့ပါ'); }
+    return base ? base + '#join=' + toCode(cfg) : '';
   }
 
   // ---------- end-to-end grant: the data token is encrypted for the requesting member only ----------
@@ -6270,12 +6231,7 @@ Important Rules for Extraction:
   }
   async function cancelJoin(removeReq, persist) {
     const j = live.joining;
-    if (j && removeReq) {
-      try {
-        await j.db.ref('sgs_live/' + j.info.k + '/requests/' + j.dev + '/status').set('cancelled');
-        await j.db.ref('sgs_live/' + j.info.k + '/members/' + enc(CLOUD_DEVICE_ID)).set({ status: 'revoked', at: firebase.database.ServerValue.TIMESTAMP });
-      } catch (e) {}
-    }
+    if (j && removeReq) { try { await j.db.ref('sgs_live/' + j.info.k + '/requests/' + j.dev + '/status').set('cancelled'); } catch (e) {} }
     clearJoining(); renderModalIfOpen();
     if (live.visiting) { if (persist) setBlocked(true); showLock('blocked', persist ? '' : 'Link သက်တမ်းကုန်သွားပါပြီ — Owner ထံမှ Link အသစ် တောင်းပါ။'); }
   }
@@ -6301,17 +6257,11 @@ Important Rules for Extraction:
       if (meta.linkExp === 0) { alert('🔒 ဒီ Link ကို ပိတ်ထားပါသည်။ ဖွင့်၍ မရပါ — Owner ထံမှ Link အသစ် တောင်းပါ။'); return; }
       if (meta.linkExp !== info.e) { alert('⚠️ ဒီ Link ကို Owner က အသစ်လဲထားပြီ။ Link အသစ် တောင်းပါ။'); return; }
       if (Date.now() > meta.linkExp) { alert('⏰ ဒီ Link သက်တမ်း ကုန်သွားပါပြီ။'); return; }
-      const memberState = (await db.ref('sgs_live/' + info.k + '/members/' + enc(CLOUD_DEVICE_ID)).once('value')).val();
-      if (memberState && memberState.status === 'revoked') {
-        setBlocked(true);
-        showLock('blocked', 'ဒီ Device က Team Live မှ ထွက်ထားပြီးဖြစ်သဖြင့် ဒီ Link ကို ပြန်အသုံးပြုခွင့် မရှိပါ။ Owner ထံမှ အခြား Device သို့မဟုတ် Link အသစ် တောင်းပါ။');
-        return;
-      }
       if (!hasCrypto()) { alert('⚠️ လုံခြုံစွာ ဝင်ရန် Link ကို https (secure) browser ဖြင့် ဖွင့်ရပါမည်။'); return; }
       const kp = await genKeyPair();
       const pubStr = await exportPub(kp.publicKey);
       const code = await verifyCode(pubStr);
-      const dev = enc(CLOUD_DEVICE_ID);
+      const dev = enc(CLOUD_DEVICE_ID) + '_' + rand();
       const base = 'sgs_live/' + info.k;
       await db.ref(base + '/requests/' + dev).set({ name, pub: pubStr, at: firebase.database.ServerValue.TIMESTAMP, status: 'pending' });
       const gRef = db.ref(base + '/grants/' + dev), sRef = db.ref(base + '/requests/' + dev + '/status');
@@ -6358,7 +6308,6 @@ Important Rules for Extraction:
       const cfg = { url: info.u, key: info.k, jobNo: info.j || '', name, owner: false, token, linkExp: info.e };
       localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
       localStorage.setItem(BASE_PREFIX + info.k, JSON.stringify(flat));
-      try { await db.ref('sgs_live/' + info.k + '/members/' + enc(CLOUD_DEVICE_ID)).set({ status: 'active', name, at: firebase.database.ServerValue.TIMESTAMP }); } catch (e) {}
       setBlocked(false);
       clearJoining();
       location.reload();
@@ -6444,20 +6393,18 @@ Important Rules for Extraction:
           ? `<div style="margin-top:10px; font-size:12px; color:#555;">⏳ Link သက်တမ်း ကျန်: <b>${rem}</b></div>`
           : `<div style="margin-top:10px; font-size:12px; color:#c0392b; font-weight:700;">⏰ Link သက်တမ်း ကုန်ပါပြီ — Member အသစ် မဝင်နိုင်တော့ပါ။</div>`;
       }
-      html += `<label style="${lbl}">🌐 Public Web URL (တခြား Device များဝင်မည့် လိပ်စာ)</label>
-        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-          <input type="text" id="live-web-url" value="${esc(publicUrlValue())}" placeholder="https://yourname.github.io/your-app/" autocapitalize="off" autocomplete="off" spellcheck="false" style="${inp} flex:1; min-width:220px;">
-          <button type="button" id="live-web-save" style="${btn('#2C5E43')}">💾 Save URL</button>
-        </div>
-        <label style="${lbl}">🔗 Share Link (Team Member ကို ပို့ပါ)</label>`;
+      html += `<label style="${lbl}">🔗 Share Link (Team Member ကို ပို့ပါ)</label>`;
       if (link) {
         html += `<input type="text" readonly value="${esc(link)}" onclick="this.select()" style="${inp}">
           <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
             <button type="button" id="live-copy-link" style="${btn('#3498db')}">📋 Copy Link</button>
-            <button type="button" id="live-share-link" style="${btn('#8e44ad')}">📤 Share Link</button>
+            ${navigator.share ? `<button type="button" id="live-share-link" style="${btn('#8e44ad')}">📤 Share</button>` : ''}
+            ${isWeb ? '' : `<button type="button" id="live-web-change" style="${btn('#7f8c8d')}">✏️ Web လိပ်စာ ပြောင်း</button>`}
           </div>`;
       } else {
-        html += `<div style="font-size:12px; color:#a05a00; background:#fff6e5; padding:8px; border-radius:6px; line-height:1.6;">Public Web URL ကို Save လုပ်ပြီးနောက် Share Link ထွက်ပါမည်။</div>`;
+        html += `<div style="font-size:12px; color:#a05a00; background:#fff6e5; padding:8px; border-radius:6px; line-height:1.6;">ဒီ App ကို ဖိုင်အဖြစ် ဖွင့်ထားသဖြင့် Link မထုတ်နိုင်သေးပါ။ App ကို တင်ထားသော <b>Web လိပ်စာ (https://…)</b> ကို အောက်မှာ တစ်ကြိမ်ထည့်ပါ — ပြီးလျှင် Link ထွက်ပါမည်။
+          <input type="text" id="live-web-url" placeholder="https://yourname.github.io/your-app/" autocapitalize="off" autocomplete="off" spellcheck="false" style="${inp} margin-top:6px;">
+          <button type="button" id="live-web-save" style="${btn('#2C5E43')} margin-top:6px;">💾 Web လိပ်စာ သိမ်းမည်</button></div>`;
       }
       html += `<label style="${lbl}">🔑 Join Code</label>
         <input type="text" readonly value="${esc(code)}" onclick="this.select()" style="${inp} font-family:monospace; font-size:11px;">
@@ -6495,12 +6442,15 @@ Important Rules for Extraction:
     on('live-start-btn', startShare);
     on('live-join-btn', () => join(document.getElementById('live-join-input').value));
     on('live-web-save', () => {
-      const v = document.getElementById('live-web-url')?.value || '';
-      if (savePublicUrl(v)) renderModal();
+      const v = (document.getElementById('live-web-url').value || '').trim();
+      if (!/^https?:\/\/[^\s]+\.[^\s]+/i.test(v)) { alert('⚠️ https:// ဖြင့်စသော Web လိပ်စာ အပြည့်အစုံ ထည့်ပါ'); return; }
+      try { localStorage.setItem(WEB_KEY, v.split('#')[0]); } catch (e) {}
+      renderModal();
     });
+    on('live-web-change', () => { if (confirm('သိမ်းထားသော Web လိပ်စာကို ဖျက်ပြီး အသစ်ထည့်မလား?')) { try { localStorage.removeItem(WEB_KEY); } catch (e) {} renderModal(); } });
     on('live-copy-link', () => copyText(toLink(live.cfg), '✅ Link ကူးပြီးပါပြီ'));
     on('live-copy-code', () => copyText(toCode(live.cfg), '✅ Code ကူးပြီးပါပြီ'));
-    on('live-share-link', shareTeamLink);
+    on('live-share-link', () => navigator.share({ title: 'SGS Job ' + live.cfg.jobNo, text: 'SGS Surveyor Notes - Job ' + live.cfg.jobNo + ' (Team Live)', url: toLink(live.cfg) }).catch(() => {}));
     on('live-leave', () => { if (confirm('Live မှ ထွက်မလား? ဒီစက်ထဲက Data ကို ဆက်ထားပါမည်။')) leave(false); });
     on('live-end', endSession);
     on('live-renew', renewLink);
@@ -6545,11 +6495,11 @@ Important Rules for Extraction:
       const cfg = safeParseJSON(localStorage.getItem(CFG_KEY), null);
       if (cfg && cfg.url && cfg.key && cfg.token) { try { start(cfg); } catch (e) { console.warn('Team Live start failed:', e); } }
       else if (cfg) { try { localStorage.removeItem(CFG_KEY); } catch (e) {} }
-      const joinToken = readJoinToken();
-      if (joinToken) {
-        const same = cfg && cfg.token && (() => { try { return fromCode(joinToken).k === cfg.key; } catch (e) { return false; } })();
-        if (same) history.replaceState(null, '', location.pathname);
-        else { join(joinToken, true); history.replaceState(null, '', location.pathname); }
+      const m = (location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
+      if (m) {
+        const same = cfg && cfg.token && (() => { try { return fromCode(m[1]).k === cfg.key; } catch (e) { return false; } })();
+        if (same) history.replaceState(null, '', location.href.split('#')[0]);
+        else { join(location.hash, true); history.replaceState(null, '', location.href.split('#')[0]); }
       }
     }, 600);
   });

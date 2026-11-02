@@ -5818,8 +5818,14 @@ Important Rules for Extraction:
     const c0 = safeParseJSON(localStorage.getItem(CFG_KEY), null);
     if (c0 && c0.token) return;                       // already inside a live session: never lock
     if (isBlocked()) { showLock('blocked'); return; }
-    const hm = (location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
-    if (hm) showLock('ask');                          // hide the app while the warning is on screen
+    // Accept both query links (?join=...) and legacy hash links (#join=...).
+    let joinToken = '';
+    try { joinToken = new URLSearchParams(location.search || '').get('join') || ''; } catch (e) {}
+    if (!joinToken) {
+      const hm = (location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
+      joinToken = hm ? hm[1] : '';
+    }
+    if (joinToken) showLock('ask');                          // hide the app while the warning is on the screen
   })();
 
   // ---------- pure 3-way merge (unit tested) ----------
@@ -6495,11 +6501,17 @@ Important Rules for Extraction:
       const cfg = safeParseJSON(localStorage.getItem(CFG_KEY), null);
       if (cfg && cfg.url && cfg.key && cfg.token) { try { start(cfg); } catch (e) { console.warn('Team Live start failed:', e); } }
       else if (cfg) { try { localStorage.removeItem(CFG_KEY); } catch (e) {} }
-      const m = (location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
-      if (m) {
-        const same = cfg && cfg.token && (() => { try { return fromCode(m[1]).k === cfg.key; } catch (e) { return false; } })();
-        if (same) history.replaceState(null, '', location.href.split('#')[0]);
-        else { join(location.hash, true); history.replaceState(null, '', location.href.split('#')[0]); }
+      // Accept both query links (?join=...) and legacy hash links (#join=...).
+      let joinToken = '';
+      try { joinToken = new URLSearchParams(location.search || '').get('join') || ''; } catch (e) {}
+      if (!joinToken) {
+        const m = (location.hash || '').match(/join=([A-Za-z0-9_\-]+)/);
+        joinToken = m ? m[1] : '';
+      }
+      if (joinToken) {
+        const same = cfg && cfg.token && (() => { try { return fromCode(joinToken).k === cfg.key; } catch (e) { return false; } })();
+        if (same) history.replaceState(null, '', location.pathname);
+        else { join(joinToken, true); history.replaceState(null, '', location.pathname); }
       }
     }, 600);
   });
